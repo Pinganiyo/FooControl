@@ -638,6 +638,8 @@ async function scrapePlaylist(plId, onProgress) {
 export async function cacheAllArtwork(albums, onProgress, colorExtractorCb) {
     if (!isNative || !albums || albums.length === 0) return;
     const BASE_URL = getApiUrl();
+    const { getArtworkQuality } = await import('./artwork');
+    const quality = await getArtworkQuality();
     
     for (let j = 0; j < albums.length; j++) {
         const alb = albums[j];
@@ -646,7 +648,11 @@ export async function cacheAllArtwork(albums, onProgress, colorExtractorCb) {
         const cacheKey = getArtworkCacheKey(alb.artist, alb.title);
         if (!cacheKey) continue; // Skip untagged albums
         
-        const artUrl = `${BASE_URL}/artwork/${alb.playlistId}/${alb.itemIndex}?width=200`;
+        let artUrl = `${BASE_URL}/artwork/${alb.playlistId}/${alb.itemIndex}`;
+        if (quality !== 'max') {
+            artUrl += `?width=${quality}`;
+        }
+
         await preCacheArtwork(artUrl, cacheKey);
         
         if (colorExtractorCb) {
@@ -660,3 +666,4 @@ export async function cacheAllArtwork(albums, onProgress, colorExtractorCb) {
     
     if (onProgress) onProgress('Artwork ready!', 100);
 }
+

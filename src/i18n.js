@@ -98,7 +98,19 @@ export const translations = {
     // Context Menu
     play_next: 'Play Next',
     add_to_queue: 'Add to Queue',
-    play_shuffle: 'Play & Shuffle'
+    play_shuffle: 'Play & Shuffle',
+    
+    // Storage & Quality
+    storage_quality: 'Storage & Quality',
+    artwork_quality_label: 'Artwork Quality',
+    quality_help: 'Choose the resolution for stored covers. Higher resolutions look better but take more space.',
+    clear_cache_prompt: 'Applying new quality settings will clear your current artwork cache. This requires a fresh artwork sync to take effect.',
+    confirm_resync: 'Confirm & Resync Artwork',
+    quality_540: '540p (Smallest)',
+    quality_800: '800p (Recommended)',
+    quality_1080: '1080p (High)',
+    quality_1200: '1200p (Ultra)',
+    quality_max: 'Original Quality'
   },
   es: {
     // Navigation
@@ -199,6 +211,18 @@ export const translations = {
     // Context Menu
     play_next: 'Reproducir Siguiente',
     add_to_queue: 'Añadir a la Cola',
-    play_shuffle: 'Reproducir Aleatorio'
+    play_shuffle: 'Reproducir Aleatorio',
+
+    // Storage & Quality
+    storage_quality: 'Almacenamiento y Calidad',
+    artwork_quality_label: 'Calidad de Portadas',
+    quality_help: 'Elige la resolución de las portadas guardadas. Mayor resolución se ve mejor pero ocupa más espacio.',
+    clear_cache_prompt: 'Aplicar nuevos ajustes de calidad borrará tu caché actual de portadas. Requiere una sincronización nueva para surtir efecto.',
+    confirm_resync: 'Confirmar y Sincronizar Portadas',
+    quality_540: '540p (Mínimo)',
+    quality_800: '800p (Recomendado)',
+    quality_1080: '1080p (Alto)',
+    quality_1200: '1200p (Ultra)',
+    quality_max: 'Calidad Original'
   }
 };

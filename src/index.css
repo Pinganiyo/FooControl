@@ -2291,3 +2291,87 @@ input:checked+.slider:before {
   margin-top: 1px;
   opacity: 0.7;
 }
+
+/* ARTWORK QUALITY & RESYNC STYLES */
+.resync-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  animation: fade-in 0.3s ease-out;
+}
+
+.resync-prompt-card {
+  background: var(--bg-dark);
+  border: 1px solid var(--glass-border);
+  border-radius: 28px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+  animation: modal-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.resync-prompt-card p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.btn-confirm {
+  background: var(--accent-color);
+  color: white;
+  padding: 1rem;
+  border-radius: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 20px var(--accent-glow);
+}
+
+.btn-cancel {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0.8rem;
+  border-radius: 16px;
+  font-weight: 600;
+  border: 1px solid var(--glass-border);
+  cursor: pointer;
+}
+
+.btn-confirm:active, .btn-cancel:active {
+  transform: scale(0.95);
+}
+
+/* Sync Progress Bar */
+.sync-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--progress-bg);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.sync-progress-fill {
+  height: 100%;
+  background: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-glow);
+  transition: width 0.3s ease-out;
+}

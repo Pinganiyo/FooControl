@@ -1,5 +1,6 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Preferences } from '@capacitor/preferences';
 import { getCachedArtwork, saveToArtworkCache } from './libraryCache';
 
 const isNative = Capacitor.isNativePlatform();
@@ -14,52 +15,129 @@ const blobToBase64 = (blob) => new Promise((resolve, reject) => {
     reader.readAsDataURL(blob);
 });
 
+/**
+ * Resizes an image and converts it to WebP.
+ * @param {Blob|ArrayBuffer|string} data - Image data
+ * @param {string|number} targetRes - Resolution limit or 'max'
+ * @returns {Promise<Blob>}
+ */
+async function processArtwork(data, targetRes = 800) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (targetRes !== 'max') {
+                const max = parseInt(targetRes, 10);
+                if (width > max || height > max) {
+                    if (width > height) {
+                        height *= max / width;
+                        width = max;
+                    } else {
+                        width *= max / height;
+                        height = max;
+                    }
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+
+            canvas.toBlob((blob) => {
+                if (blob) resolve(blob);
+                else reject(new Error('Canvas conversion failed'));
+            }, 'image/webp', 0.85); // High quality WebP
+            
+            // Clean up
+            URL.revokeObjectURL(img.src);
+        };
+        img.onerror = () => reject(new Error('Failed to load image for processing'));
+        
+        if (data instanceof Blob) {
+            img.src = URL.createObjectURL(data);
+        } else if (data instanceof ArrayBuffer) {
+            img.src = URL.createObjectURL(new Blob([data]));
+        } else if (typeof data === 'string') {
+            // Assume base64 from CapacitorHttp
+            img.src = `data:image/jpeg;base64,${data}`;
+        }
+    });
+}
+
+/**
+ * Fetches the user preferred artwork quality.
+ */
+export async function getArtworkQuality() {
+    const { value } = await Preferences.get({ key: 'artwork_quality' });
+    return value || '800';
+}
+
 // In-memory cache for local file existence checks.
-// Prevents hammering Filesystem.stat() for every album card on every render.
-// null = not yet checked, false = confirmed missing, string = confirmed local path
 const localUrlCache = new Map();
 
 /**
  * Returns a local URL if the artwork is cached, otherwise null.
- * This is non-blocking and used for instant placeholders.
  */
 export async function getLocalArtworkUrl(cacheKey) {
     if (!cacheKey || !isNative) return null;
 
-    // Return memoized result if available (only if it's a valid string)
     if (localUrlCache.has(cacheKey) && typeof localUrlCache.get(cacheKey) === 'string') {
         return localUrlCache.get(cacheKey);
     }
 
-    const filename = `${cacheKey}.jpg`;
-    try {
-        const result = await Filesystem.getUri({
-            path: `covers/${filename}`,
-            directory: Directory.Data
-        });
-        await Filesystem.stat({
-            path: `covers/${filename}`,
-            directory: Directory.Data
-        });
-        const url = Capacitor.convertFileSrc(result.uri);
-        localUrlCache.set(cacheKey, url);
-        return url;
-    } catch (e) {
-        // Don't permanently blacklist, just return null so it can try network then cache later
-        return null;
+    // Prefer webp, fallback to jpg for legacy support
+    const extensions = ['webp', 'jpg'];
+    for (const ext of extensions) {
+        const filename = `${cacheKey}.${ext}`;
+        try {
+            const result = await Filesystem.getUri({
+                path: `covers/${filename}`,
+                directory: Directory.Data
+            });
+            await Filesystem.stat({
+                path: `covers/${filename}`,
+                directory: Directory.Data
+            });
+            const url = Capacitor.convertFileSrc(result.uri);
+            localUrlCache.set(cacheKey, url);
+            return url;
+        } catch (e) {}
     }
+    return null;
 }
 
 /**
- * Clears the in-memory cache (call after a sync completes so new covers are picked up).
+ * Clears the in-memory cache.
  */
 export function clearLocalArtworkCache() {
     localUrlCache.clear();
 }
 
 /**
+ * Purges the artwork directory on disk.
+ */
+export async function clearArtworkFilesystemCache() {
+    if (!isNative) return;
+    try {
+        await Filesystem.rmdir({
+            path: 'covers',
+            directory: Directory.Data,
+            recursive: true
+        });
+        clearLocalArtworkCache();
+    } catch (e) {
+        console.error("Failed to clear artwork directory", e);
+    }
+}
+
+/**
  * Concurrency limiter for artwork downloads.
- * Prevents simultaneous CapacitorHttp arraybuffer fetches from OOM-ing the device.
  */
 const MAX_CONCURRENT = 3;
 let activeDownloads = 0;
@@ -78,11 +156,8 @@ function acquireDownloadSlot() {
 
 function releaseDownloadSlot() {
     const next = downloadQueue.shift();
-    if (next) {
-        next(); // hand the slot to next waiter
-    } else {
-        activeDownloads--;
-    }
+    if (next) next();
+    else activeDownloads--;
 }
 
 /**
@@ -92,25 +167,20 @@ function releaseDownloadSlot() {
 export async function getArtworkUrl(remoteUrl, cacheKey) {
     if (!cacheKey) return remoteUrl;
 
-    // 1. Try Instant Local Resolve
     const local = await getLocalArtworkUrl(cacheKey);
     if (local) return local;
 
-    // 2. Check Web Cache (IndexedDB)
     if (!isNative) {
         const cachedBlob = await getCachedArtwork(cacheKey);
-        if (cachedBlob) {
-            return URL.createObjectURL(cachedBlob);
-        }
+        if (cachedBlob) return URL.createObjectURL(cachedBlob);
     }
 
     if (!remoteUrl) return null;
 
-    // 3. Throttled Network Fetch with Retries
     let retries = 2;
-    let imageDataBase64 = null;
+    let imageData = null;
 
-    while (retries >= 0 && !imageDataBase64) {
+    while (retries >= 0 && !imageData) {
         await acquireDownloadSlot();
         try {
             if (isNative) {
@@ -120,14 +190,16 @@ export async function getArtworkUrl(remoteUrl, cacheKey) {
                 });
 
                 if (response.status >= 200 && response.status < 300 && response.data) {
-                    imageDataBase64 = response.data;
+                    imageData = response.data;
                 }
             } else {
                 const res = await fetch(remoteUrl);
                 if (res.ok) {
                     const blob = await res.blob();
-                    saveToArtworkCache(cacheKey, blob).catch(e => console.error("Cache save failed", e));
-                    return URL.createObjectURL(blob);
+                    const quality = await getArtworkQuality();
+                    const processed = await processArtwork(blob, quality);
+                    saveToArtworkCache(cacheKey, processed).catch(e => console.error("Cache save failed", e));
+                    return URL.createObjectURL(processed);
                 }
             }
         } catch (e) {
@@ -136,15 +208,14 @@ export async function getArtworkUrl(remoteUrl, cacheKey) {
             releaseDownloadSlot();
         }
         
-        if (!imageDataBase64 && retries > 0) {
-            await new Promise(r => setTimeout(r, 500)); // Small pause before retry
+        if (!imageData && retries > 0) {
+            await new Promise(r => setTimeout(r, 500));
         }
         retries--;
     }
 
-    // 4. Save to Native Cache if we have data
-    if (isNative && imageDataBase64) {
-        const filename = `${cacheKey}.jpg`;
+    if (isNative && imageData) {
+        const filename = `${cacheKey}.webp`;
         try {
             try {
                 await Filesystem.mkdir({
@@ -152,11 +223,15 @@ export async function getArtworkUrl(remoteUrl, cacheKey) {
                     directory: Directory.Data,
                     recursive: true
                 });
-            } catch (e) { /* ignore if already exists */ }
+            } catch (e) {}
+
+            const quality = await getArtworkQuality();
+            const processedBlob = await processArtwork(imageData, quality);
+            const base64 = await blobToBase64(processedBlob);
 
             await Filesystem.writeFile({
                 path: `covers/${filename}`,
-                data: imageDataBase64,
+                data: base64,
                 directory: Directory.Data
             });
 
@@ -172,7 +247,7 @@ export async function getArtworkUrl(remoteUrl, cacheKey) {
         }
     }
 
-    return remoteUrl; // Fallback to remote URL
+    return remoteUrl;
 }
 
 /**
@@ -184,34 +259,31 @@ export function getArtworkCacheKey(artist, album, title) {
     const normAlbum = (album || '').toLowerCase().trim();
     const normTitle = (title || '').toLowerCase().trim();
 
-    // If all provided values are empty or generic fallbacks, skip caching entirely
     const vals = [normArtist, normAlbum, normTitle].filter(v => v);
     if (vals.length === 0 || vals.every(v => UNKNOWN_VALUES.includes(v))) return null;
 
-    // Sanitize for filename safety
     const key = `art_${artist || ''}_${album || ''}_${title || ''}`.toLowerCase();
     return key.replace(/[^a-z0-9_\-]/gi, '_');
 }
 
 /**
- * Pre-caches a low-resolution version of an artwork during sync.
+ * Pre-caches an optimized version of an artwork during sync.
  */
 export async function preCacheArtwork(remoteUrl, cacheKey) {
     if (!remoteUrl || !cacheKey || !isNative) return;
 
-    const filename = `${cacheKey}.jpg`;
+    // Check if webp version exists
+    const filename = `${cacheKey}.webp`;
     
     try {
-        // Check if already exists
         try {
             await Filesystem.stat({
                 path: `covers/${filename}`,
                 directory: Directory.Data
             });
-            return; // Already cached
+            return;
         } catch (e) {}
 
-        // Download via CapacitorHttp (use download slot to avoid flooding)
         await acquireDownloadSlot();
         try {
             const response = await CapacitorHttp.get({
@@ -228,9 +300,13 @@ export async function preCacheArtwork(remoteUrl, cacheKey) {
                     });
                 } catch (e) {}
 
+                const quality = await getArtworkQuality();
+                const processedBlob = await processArtwork(response.data, quality);
+                const base64 = await blobToBase64(processedBlob);
+
                 await Filesystem.writeFile({
                     path: `covers/${filename}`,
-                    data: response.data,
+                    data: base64,
                     directory: Directory.Data
                 });
             }
@@ -239,3 +315,4 @@ export async function preCacheArtwork(remoteUrl, cacheKey) {
         }
     } catch (e) { }
 }
+

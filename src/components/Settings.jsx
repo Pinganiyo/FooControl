@@ -4,6 +4,8 @@ import { getPlayerState } from '../api/beefweb';
 import { useTranslation } from '../contexts/TranslationContext';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
+import { clearArtworkFilesystemCache, getArtworkQuality } from '../api/artwork';
+import { getCachedData, cacheAllArtwork } from '../api/libraryCache';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -13,14 +15,25 @@ export default function Settings() {
     const [adaptiveColor, setAdaptiveColor] = useState(() => {
         return localStorage.getItem('adaptive_color_enabled') === 'true';
     });
+    const [artworkQuality, setArtworkQuality] = useState('800');
     const [isScanning, setIsScanning] = useState(false);
+    const [isResyncing, setIsResyncing] = useState(false);
+    const [resyncProgress, setResyncProgress] = useState(null);
     const [connStatus, setConnStatus] = useState('checking'); // 'connected', 'error', 'checking'
     const [scanProgress, setScanProgress] = useState('');
+    const [showResyncPrompt, setShowResyncPrompt] = useState(false);
+    const [pendingQuality, setPendingQuality] = useState(null);
     const [debugInfo, setDebugInfo] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     useEffect(() => {
+        const loadSettings = async () => {
+            const q = await getArtworkQuality();
+            setArtworkQuality(q);
+        };
+        loadSettings();
+
         const interval = setInterval(() => {
             const lastData = localStorage.getItem('foocontrol_last_res');
             if (lastData) setDebugInfo(lastData);
@@ -28,24 +41,48 @@ export default function Settings() {
         return () => clearInterval(interval);
     }, []);
 
-    const checkCurrentConnection = async () => {
-        if (!url) {
-            setConnStatus('error');
-            return;
-        }
-        setConnStatus('checking');
-        try {
-            await getPlayerState();
-            setConnStatus('connected');
-        } catch (e) {
-            setConnStatus('error');
-        }
-    };
-
     const handleSave = () => {
         setServerUrl(url);
         setSuccess(t('settings_saved'));
         setTimeout(() => setSuccess(''), 3000);
+    };
+
+    const handleQualityChange = (val) => {
+        if (val === artworkQuality) return;
+        setPendingQuality(val);
+        setShowResyncPrompt(true);
+    };
+
+    const confirmResync = async () => {
+        setShowResyncPrompt(false);
+        setIsResyncing(true);
+        setError('');
+        
+        try {
+            // 1. Save new quality
+            await Preferences.set({ key: 'artwork_quality', value: pendingQuality });
+            setArtworkQuality(pendingQuality);
+            
+            // 2. Clear cache
+            await clearArtworkFilesystemCache();
+            
+            // 3. Trigger resync
+            const library = await getCachedData('library_data');
+            if (library && library.albums) {
+                await cacheAllArtwork(library.albums, (msg, perc) => {
+                    setResyncProgress({ msg, perc });
+                });
+                setSuccess(t('settings_saved'));
+            } else {
+                setSuccess(t('settings_saved') + " (Library sync needed to refresh covers fully)");
+            }
+        } catch (err) {
+            setError("Resync failed: " + err.message);
+        } finally {
+            setIsResyncing(false);
+            setResyncProgress(null);
+            setPendingQuality(null);
+        }
     };
 
     const handleScan = async () => {
@@ -79,7 +116,6 @@ export default function Settings() {
             await Preferences.set({ key: 'adaptive_color_enabled', value: valueStr });
         }
         if (!enabled) {
-            // Reset immediately when turned off
             document.documentElement.style.setProperty('--accent-color', 'rgb(59, 130, 246)');
             document.documentElement.style.setProperty('--accent-glow', 'rgba(59, 130, 246, 0.4)');
         }
@@ -91,7 +127,6 @@ export default function Settings() {
 
             <div className="settings-section">
                 <h3>{t('customization')}</h3>
-                <p className="settings-help">{t('adaptive_ui_help')}</p>
                 <div className="setting-control">
                     <div className="setting-label">
                         <span>{t('adaptive_ui')}</span>
@@ -107,10 +142,53 @@ export default function Settings() {
                     </label>
                 </div>
             </div>
+
+            <div className="settings-section">
+                <h3>{t('storage_quality')}</h3>
+                <p className="settings-help">{t('quality_help')}</p>
+                <div className="setting-control">
+                    <div className="setting-label">
+                        <span>{t('artwork_quality_label')}</span>
+                    </div>
+                    <select 
+                        className="settings-input" 
+                        style={{width:'auto', minWidth:'150px'}} 
+                        value={artworkQuality}
+                        onChange={(e) => handleQualityChange(e.target.value)}
+                        disabled={isResyncing}
+                    >
+                        <option value="540">{t('quality_540')}</option>
+                        <option value="800">{t('quality_800')}</option>
+                        <option value="1080">{t('quality_1080')}</option>
+                        <option value="1200">{t('quality_1200')}</option>
+                        <option value="max">{t('quality_max')}</option>
+                    </select>
+                </div>
+
+                {showResyncPrompt && (
+                    <div className="resync-prompt-overlay">
+                        <div className="resync-prompt-card">
+                            <p>{t('clear_cache_prompt')}</p>
+                            <div className="prompt-actions">
+                                <button className="btn-confirm" onClick={confirmResync}>{t('confirm_resync')}</button>
+                                <button className="btn-cancel" onClick={() => setShowResyncPrompt(false)}>{t('cancel')}</button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {isResyncing && resyncProgress && (
+                    <div className="sync-status-container" style={{marginTop:'1rem'}}>
+                        <div className="sync-progress-bar">
+                            <div className="sync-progress-fill" style={{width: `${resyncProgress.perc}%`}}></div>
+                        </div>
+                        <p className="settings-help">{resyncProgress.msg}</p>
+                    </div>
+                )}
+            </div>
             
             <div className="settings-section">
                 <h3>{t('regional')}</h3>
-                <p className="settings-help">{t('language_help')}</p>
                 <div className="setting-control">
                     <div className="setting-label">
                         <span>{t('language')}</span>
