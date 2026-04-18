@@ -19,31 +19,31 @@ function formatTime(seconds) {
     return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
+export default function Player({ beefwebState, onOpenQueue, onOpenAlbum, onOpenArtist }) {
     const { t } = useTranslation();
     const { playerState, isConnected, currentTime, upcomingTracks } = beefwebState;
     const progressRef = useRef(null);
-    const holdTimer = useRef(null);
-
-    const handlePointerDown = () => {
-        holdTimer.current = setTimeout(() => {
-            onOpenQueue();
-        }, 600); // 600ms hold
-    };
-
-    const clearHold = () => {
-        if (holdTimer.current) clearTimeout(holdTimer.current);
-    };
+    const artistHoldTimer = useRef(null);
 
     const activeItem = playerState?.activeItem;
     const isPlaying = playerState?.playbackState === 'playing';
 
-    // Parse the data out of columns depending on what Server-Sent Events/Query provides
-    // Our hook asked for %title%, %artist%, %album%, %length_seconds% in trcolumns
+    // Parse the data out of columns
     const title = activeItem?.columns?.[0] || t('unknown_title');
     const artist = activeItem?.columns?.[1] || t('unknown_artist');
     const album = activeItem?.columns?.[2] || '';
     const duration = parseFloat(activeItem?.columns?.[3]) || activeItem?.duration || 0;
+
+    const handleArtistPointerDown = () => {
+        if (!activeItem || !artist || artist === t('unknown_artist')) return;
+        artistHoldTimer.current = setTimeout(() => {
+            onOpenArtist(artist);
+        }, 600); // 600ms hold
+    };
+
+    const clearArtistHold = () => {
+        if (artistHoldTimer.current) clearTimeout(artistHoldTimer.current);
+    };
 
     // Use current time and ensure it doesn't exceed duration
     const displayTime = Math.min(currentTime, duration);
@@ -99,7 +99,16 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
 
             <div className="track-info">
                 <div className="track-title">{activeItem ? title : t('no_track_playing')}</div>
-                <div className="track-artist">{activeItem ? artist : '-'}</div>
+                <div 
+                    className="track-artist" 
+                    onPointerDown={handleArtistPointerDown}
+                    onPointerUp={clearArtistHold}
+                    onPointerLeave={clearArtistHold}
+                    onPointerCancel={clearArtistHold}
+                    style={{ cursor: 'pointer' }}
+                >
+                    {activeItem ? artist : '-'}
+                </div>
             </div>
 
             <div className="progress-container">
@@ -128,11 +137,9 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
                 {(actualNextTrack || isShuffle) && (
                     <div
                         className="up-next"
-                        onPointerDown={handlePointerDown}
-                        onPointerUp={clearHold}
-                        onPointerLeave={clearHold}
-                        onPointerCancel={clearHold}
-                        title={t('hold_queue')}
+                        onClick={() => onOpenQueue()}
+                        title={t('view_queue')}
+                        style={{ cursor: 'pointer' }}
                     >
                         {t('up_next')} <span>{actualNextTrack ? actualNextTrack.title : t('random_track')}</span>
                     </div>

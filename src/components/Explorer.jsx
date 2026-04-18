@@ -6,10 +6,8 @@ import ProgressiveImage from './ProgressiveImage';
 import { getApiUrl } from '../api/network';
 import { getArtworkCacheKey } from '../api/artwork';
 
-export default function Explorer({ library, isSyncing, syncStatus, isArtworkCaching, artworkCacheStatus, onSync, onDeepSync, onOpenAlbum, onOpenMenu, onShuffleArtist }) {
+export default function Explorer({ library, isSyncing, syncStatus, isArtworkCaching, artworkCacheStatus, onSync, onDeepSync, onOpenAlbum, onOpenMenu, onShuffleArtist, view, setView, selectedArtist, setSelectedArtist }) {
     const { t } = useTranslation();
-    const [view, setView] = useState('menu'); // 'menu', 'albums', 'folders', 'artists', or 'artist_albums'
-    const [selectedArtist, setSelectedArtist] = useState(null);
     const [showDeepSyncSetup, setShowDeepSyncSetup] = useState(false);
     const [deepSyncPaths, setDeepSyncPaths] = useState('C:\\Users\\Ruben\\Music\\a.Flac\nC:\\Users\\Ruben\\Music\\M.Others');
     

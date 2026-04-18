@@ -26,6 +26,10 @@ function App() {
   const [currentView, setCurrentView] = useState('player');
   const [selectedAlbum, setSelectedAlbum] = useState(null);
 
+  // Explorer View State
+  const [explorerView, setExplorerView] = useState('menu'); // 'menu', 'albums', 'folders', 'artists', or 'artist_albums'
+  const [explorerArtist, setExplorerArtist] = useState(null);
+
   // Tracks items inserted after current song to handle "Add to Queue" vs "Play Next"
   const [manualQueueOffset, setManualQueueOffset] = useState(0);
 
@@ -318,6 +322,10 @@ function App() {
             artworkCacheStatus={artworkCacheStatus}
             onSync={handleGlobalSync}
             onDeepSync={handleDeepSync}
+            view={explorerView}
+            setView={setExplorerView}
+            selectedArtist={explorerArtist}
+            setSelectedArtist={setExplorerArtist}
             onOpenAlbum={(album) => {
               setSelectedAlbum(album);
               setCurrentView('album');
@@ -337,6 +345,11 @@ function App() {
           <Player 
               beefwebState={beefwebState} 
               onOpenQueue={() => setCurrentView('queue')} 
+              onOpenArtist={(artistName) => {
+                  setExplorerArtist(artistName);
+                  setExplorerView('artist_albums');
+                  setCurrentView('explorer');
+              }}
               onOpenAlbum={() => {
                   setSelectedAlbum(null); // use current track
                   setCurrentView('album');
@@ -347,7 +360,14 @@ function App() {
         {/* Global Navigation Bar */}
         <BottomNav 
           currentView={currentView} 
-          onChangeView={setCurrentView} 
+          onChangeView={(view) => {
+              setCurrentView(view);
+              // reset explorer to menu if we are clicking explorer icon from another top-level view
+              if (view === 'explorer' && currentView !== 'explorer') {
+                  setExplorerView('menu');
+                  setExplorerArtist(null);
+              }
+          }} 
           isLibrarySyncing={isSyncing} 
         />
 
