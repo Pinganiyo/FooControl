@@ -257,20 +257,36 @@ export async function playTracksInOrder(tracks) {
     // 1. Clear existing contents
     await nativeFetch({ url: `${BASE_URL}/playlists/${plId}/clear`, method: 'POST' });
 
-    // 2. Add track paths one by one to ensure Foobar respects the sequence
+    // 2. Add first track and start playing FAST
     const paths = tracks.map(t => t.path).filter(Boolean);
-    for (const path of paths) {
-        await nativeFetch({
-            url: `${BASE_URL}/playlists/${plId}/items/add`,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            data: { items: [path] }
-        });
-    }
+    if (paths.length === 0) return;
 
-    // 3. Set sequential mode and play from index 0
+    await nativeFetch({
+        url: `${BASE_URL}/playlists/${plId}/items/add`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: { items: [paths[0]] }
+    });
+
+    // Set sequential mode and play from index 0 immediately
     await setPlaybackMode(0);
     await playTargetItem(plId, 0);
+
+    // 3. Add the rest in the background without blocking the UI
+    (async () => {
+        for (let i = 1; i < paths.length; i++) {
+            try {
+                await nativeFetch({
+                    url: `${BASE_URL}/playlists/${plId}/items/add`,
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    data: { items: [paths[i]] }
+                });
+            } catch (e) {
+                console.warn('Background track add failed', e);
+            }
+        }
+    })();
 }
 
 /**

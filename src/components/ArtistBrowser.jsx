@@ -1,9 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import ProgressiveImage from './ProgressiveImage';
+import { useTranslation } from '../contexts/TranslationContext';
 import { getApiUrl } from '../api/network';
 import { getArtworkCacheKey } from '../api/artwork';
 
 export default function ArtistBrowser({ artists = [], onOpenArtist, isSyncing }) {
+    const { t } = useTranslation();
     const [searchQuery, setSearchQuery] = useState('');
     const [sortBy, setSortBy] = useState('tracks');
 
@@ -32,7 +34,7 @@ export default function ArtistBrowser({ artists = [], onOpenArtist, isSyncing })
         return (
             <div className="album-loading" style={{ marginTop: '4rem' }}>
                  <div className="fancy-spinner"></div>
-                 <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>Syncing Artists...</p>
+                 <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>{t('syncing_library')}</p>
             </div>
         );
     }
@@ -40,7 +42,7 @@ export default function ArtistBrowser({ artists = [], onOpenArtist, isSyncing })
     if (!artists || artists.length === 0) {
         return (
             <div className="empty-message" style={{ padding: '3rem', textAlign: 'center' }}>
-                No artists found. Run a Deep Sync!
+                {t('no_matches')}
             </div>
         );
     }
@@ -55,7 +57,7 @@ export default function ArtistBrowser({ artists = [], onOpenArtist, isSyncing })
                     </svg>
                     <input 
                         type="text" 
-                        placeholder="Search artists..." 
+                        placeholder={t('search_placeholder')} 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="search-input"
@@ -69,14 +71,14 @@ export default function ArtistBrowser({ artists = [], onOpenArtist, isSyncing })
                         value={sortBy} 
                         onChange={(e) => setSortBy(e.target.value)}
                     >
-                        <option value="tracks">Size (# Tracks)</option>
-                        <option value="name">Name (A-Z)</option>
+                        <option value="tracks">{t('sort_tracks')}</option>
+                        <option value="name">{t('sort_name')}</option>
                     </select>
                 </div>
             </div>
 
             <div className="artist-count-label">
-                {filteredAndSortedArtists.length} artists
+                {filteredAndSortedArtists.length} {t('artists')}
             </div>
 
             <div className="album-grid artist-grid">
@@ -93,7 +95,7 @@ export default function ArtistBrowser({ artists = [], onOpenArtist, isSyncing })
                         <div className="album-card-info artist-card-info">
                             <div className="album-card-title artist-card-title">{artist.name}</div>
                             <div className="album-card-artist artist-card-meta">
-                                {artist.trackCount} {artist.trackCount === 1 ? 'track' : 'tracks'}
+                                {artist.trackCount} {artist.trackCount === 1 ? t('track') : t('tracks')}
                             </div>
                         </div>
                     </div>

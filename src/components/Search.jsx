@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAllCachedTracks } from '../api/libraryCache';
+import { useTranslation } from '../contexts/TranslationContext';
 import { playTargetItem } from '../api/beefweb';
 import ProgressiveImage from './ProgressiveImage';
 import { getApiUrl } from '../api/network';
@@ -7,6 +8,7 @@ import { getArtworkCacheKey } from '../api/artwork';
 import { useLongPress } from '../hooks/useLongPress';
 
 export default function Search({ beefwebState, onOpenMenu }) {
+    const { t } = useTranslation();
     const [query, setQuery] = useState('');
     const [allTracks, setAllTracks] = useState([]);
     const [results, setResults] = useState([]);
@@ -52,7 +54,7 @@ export default function Search({ beefwebState, onOpenMenu }) {
                     <input 
                         type="text" 
                         className="search-input" 
-                        placeholder="Search songs, artists, albums..." 
+                        placeholder={t('search_placeholder')} 
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         autoFocus
@@ -71,14 +73,14 @@ export default function Search({ beefwebState, onOpenMenu }) {
                         />
                     ))
                 ) : query.trim() ? (
-                    <div className="no-results">No matches found for "{query}"</div>
+                    <div className="no-results">{t('no_matches')} "{query}"</div>
                 ) : (
                     <div className="search-placeholder">
                         <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
                             <circle cx="11" cy="11" r="8"></circle>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                         </svg>
-                        <p>Search your local library instantly</p>
+                        <p>{t('search_desc')}</p>
                     </div>
                 )}
             </div>

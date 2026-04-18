@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAlbumTracks, playTargetItem, setPlaybackMode, playAlbumShuffled } from '../api/beefweb';
+import { useTranslation } from '../contexts/TranslationContext';
 import ProgressiveImage from './ProgressiveImage';
 import { getApiUrl } from '../api/network';
 import { getDominantColor, applyThemeColor } from '../api/colorExtractor';
@@ -8,6 +9,7 @@ import { getTracksByAlbum } from '../api/libraryCache';
 import { useLongPress } from '../hooks/useLongPress';
 
 export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu }) {
+    const { t } = useTranslation();
     const { playerState } = beefwebState;
     const activeItem = playerState?.activeItem;
 
@@ -145,7 +147,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                     </div>
                     <div className="album-hero-title-overlay">
                         <h2 className="album-header-title">{targetAlbumName}</h2>
-                        {isOffline && <span className="offline-badge">Offline Cache</span>}
+                        {isOffline && <span className="offline-badge">{t('offline_cache')}</span>}
                     </div>
                 </div>
 
@@ -154,7 +156,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                     <div className="album-action-row">
                         <button className="album-action-btn primary" onClick={handlePlayAlbum}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-                            Play
+                            {t('play')}
                         </button>
                         <button className="album-action-btn secondary" onClick={handleShuffleAlbum} disabled={isBuildingQueue}>
                             {isBuildingQueue ? (
@@ -164,7 +166,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                                     <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
                                 </svg>
                             )}
-                            {isBuildingQueue ? 'Building...' : 'Shuffle'}
+                            {isBuildingQueue ? t('building') : t('shuffle')}
                         </button>
                     </div>
 
@@ -188,7 +190,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                                 <React.Fragment key={`frag-${i}`}>
                                     {showDiscHeader && (
                                         <div className="disc-divider">
-                                            <span>Disc {disc}</span>
+                                            <span>{t('disc')} {disc}</span>
                                         </div>
                                     )}
                                     <TrackRow 

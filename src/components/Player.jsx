@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { useBeefweb } from '../hooks/useBeefweb';
+import { useTranslation } from '../contexts/TranslationContext';
 import { playPause, playNext, playPrevious, setPosition } from '../api/beefweb';
 import ProgressiveImage from './ProgressiveImage';
 import { getApiUrl } from '../api/network';
@@ -19,6 +20,7 @@ function formatTime(seconds) {
 }
 
 export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
+    const { t } = useTranslation();
     const { playerState, isConnected, currentTime, upcomingTracks } = beefwebState;
     const progressRef = useRef(null);
     const holdTimer = useRef(null);
@@ -38,8 +40,8 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
 
     // Parse the data out of columns depending on what Server-Sent Events/Query provides
     // Our hook asked for %title%, %artist%, %album%, %length_seconds% in trcolumns
-    const title = activeItem?.columns?.[0] || 'Unknown Title';
-    const artist = activeItem?.columns?.[1] || 'Unknown Artist';
+    const title = activeItem?.columns?.[0] || t('unknown_title');
+    const artist = activeItem?.columns?.[1] || t('unknown_artist');
     const album = activeItem?.columns?.[2] || '';
     const duration = parseFloat(activeItem?.columns?.[3]) || activeItem?.duration || 0;
 
@@ -63,7 +65,7 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
         return (
             <div className="status-overlay">
                 <div className="fancy-spinner" />
-                <span>Connecting to foobar2000...</span>
+                <span>{t('connecting')}</span>
             </div>
         );
     }
@@ -75,10 +77,8 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
     return (
         <div className="player-container">
             <div className="player-header">
-                NOW PLAYING
+                {t('now_playing')}
             </div>
-
-            <div className={`conn-indicator ${isConnected ? 'connected' : ''}`} title={isConnected ? 'Connected' : 'Disconnected'} />
 
             <div className={`album-art-container ${!isPlaying ? 'paused' : ''}`}>
                 {activeItem ? (
@@ -98,7 +98,7 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
             </div>
 
             <div className="track-info">
-                <div className="track-title">{activeItem ? title : 'No Track Playing'}</div>
+                <div className="track-title">{activeItem ? title : t('no_track_playing')}</div>
                 <div className="track-artist">{activeItem ? artist : '-'}</div>
             </div>
 
@@ -132,9 +132,9 @@ export default function Player({ beefwebState, onOpenQueue, onOpenAlbum }) {
                         onPointerUp={clearHold}
                         onPointerLeave={clearHold}
                         onPointerCancel={clearHold}
-                        title="Hold to view queue"
+                        title={t('hold_queue')}
                     >
-                        Up Next: <span>{actualNextTrack ? actualNextTrack.title : 'Random Track 🔀'}</span>
+                        {t('up_next')} <span>{actualNextTrack ? actualNextTrack.title : t('random_track')}</span>
                     </div>
                 )}
             </div>

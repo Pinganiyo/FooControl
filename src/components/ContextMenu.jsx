@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { useTranslation } from '../contexts/TranslationContext';
 
 const Icons = {
     PlayNext: () => (
@@ -23,6 +24,7 @@ const Icons = {
  * Premium Context Menu with Glassmorphism
  */
 const ContextMenu = ({ isOpen, x, y, track, onClose, onAction }) => {
+    const { t } = useTranslation();
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -63,23 +65,23 @@ const ContextMenu = ({ isOpen, x, y, track, onClose, onAction }) => {
             >
                 <div className="context-menu-header">
                     <div className="context-menu-track-info">
-                        <span className="title">{track?.title || 'Unknown Track'}</span>
-                        <span className="artist">{track?.artist || 'Unknown Artist'}</span>
+                        <span className="title">{track?.title || t('unknown_title')}</span>
+                        <span className="artist">{track?.artist || t('unknown_artist')}</span>
                     </div>
                 </div>
 
                 <div className="context-menu-options">
                     <button className="option-btn" onClick={() => handleAction('playNext')}>
                         <Icons.PlayNext />
-                        <span>Play Next</span>
+                        <span>{t('play_next')}</span>
                     </button>
                     <button className="option-btn" onClick={() => handleAction('addToQueue')}>
                         <Icons.Queue />
-                        <span>Add to Queue</span>
+                        <span>{t('add_to_queue')}</span>
                     </button>
                     <button className="option-btn" onClick={() => handleAction('playShuffle')}>
                         <Icons.Shuffle />
-                        <span>Play Shuffle</span>
+                        <span>{t('play_shuffle')}</span>
                     </button>
                 </div>
             </div>

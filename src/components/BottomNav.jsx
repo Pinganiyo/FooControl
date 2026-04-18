@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from '../contexts/TranslationContext';
 
 // Grid Icon
 const ExplorerIcon = () => (
@@ -37,6 +38,7 @@ const MenuIcon = () => (
 );
 
 export default function BottomNav({ currentView, onChangeView, isLibrarySyncing }) {
+    const { t } = useTranslation();
     
     // Safety check so we don't highlight background tabs when an overlay is active
     const isRootTabActive = (tabName) => {
@@ -50,19 +52,19 @@ export default function BottomNav({ currentView, onChangeView, isLibrarySyncing 
                     <ExplorerIcon />
                     {isLibrarySyncing && <div className="nav-dot-sync"></div>}
                 </div>
-                <span>Explorer</span>
+                <span>{t('explorer')}</span>
             </div>
             <div className={`nav-item ${isRootTabActive('player') ? 'active' : ''}`} onClick={() => onChangeView('player')}>
                 <SongIcon />
-                <span>Song</span>
+                <span>{t('player')}</span>
             </div>
             <div className={`nav-item ${isRootTabActive('search') ? 'active' : ''}`} onClick={() => onChangeView('search')}>
                 <SearchIcon />
-                <span>Search</span>
+                <span>{t('search')}</span>
             </div>
             <div className={`nav-item ${isRootTabActive('settings') ? 'active' : ''}`} onClick={() => onChangeView('settings')}>
                 <MenuIcon />
-                <span>Menu</span>
+                <span>{t('menu')}</span>
             </div>
         </div>
     );

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { playTargetItem, movePlaylistItems } from '../api/beefweb';
+import { useTranslation } from '../contexts/TranslationContext';
 import { getApiUrl } from '../api/network';
 import {
   DndContext, 
@@ -23,6 +24,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 
 export default function Queue({ beefwebState, onClose, manualQueueOffset = 0 }) {
+    const { t } = useTranslation();
     const { playerState, upcomingTracks } = beefwebState;
     const isShuffle = playerState?.playbackMode >= 3;
     const hasUpcoming = upcomingTracks.some(t => t.isUpcoming);
@@ -102,13 +104,13 @@ export default function Queue({ beefwebState, onClose, manualQueueOffset = 0 }) 
                         <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
                     </svg>
                 </button>
-                <h2>Songs Order</h2>
+                <h2>{t('songs_order')}</h2>
                 <div style={{width: 28}}></div>
             </div>
 
             <div className="queue-list">
                 {localTracks.length === 0 ? (
-                    <div className="empty-queue">No upcoming songs</div>
+                    <div className="empty-queue">{t('no_upcoming')}</div>
                 ) : (
                     <DndContext 
                         sensors={sensors}
@@ -148,8 +150,8 @@ export default function Queue({ beefwebState, onClose, manualQueueOffset = 0 }) 
                             <div className="queue-item-icon-fallback" style={{fontSize: '1.5rem'}}>🔀</div>
                         </div>
                         <div className="queue-item-info">
-                            <div className="queue-item-title">Shuffle Mode</div>
-                            <div className="queue-item-artist">Next tracks will be selected randomly</div>
+                            <div className="queue-item-title">{t('shuffle_mode')}</div>
+                            <div className="queue-item-artist">{t('shuffle_desc')}</div>
                         </div>
                     </div>
                 )}
@@ -173,7 +175,7 @@ function SortableItem({ track, index, manualQueueOffset, onClick }) {
 
     const style = {
         transform: CSS.Translate.toString(transform),
-        transition,
+        transition: null, // Disable all move animations
         visibility: isDragging ? 'hidden' : 'visible',
     };
 
@@ -195,6 +197,7 @@ function SortableItem({ track, index, manualQueueOffset, onClick }) {
 }
 
 function QueueItemContent({ track, onClick, index, manualQueueOffset, isOverlay, dndProps }) {
+    const { t } = useTranslation();
     if (!track) return null;
     const { attributes, listeners } = dndProps || {};
     const isNext = !isOverlay && track.isUpcoming && index === 0; 
@@ -230,8 +233,8 @@ function QueueItemContent({ track, onClick, index, manualQueueOffset, isOverlay,
                 <div className="queue-item-info">
                     <div className="queue-item-title">
                         {track.title}
-                        {isNext && <span className="queue-badge next">NEXT</span>}
-                        {isCued && !isNext && <span className="queue-badge cued">CUED</span>}
+                        {isNext && <span className="queue-badge next">{t('next_badge')}</span>}
+                        {isCued && !isNext && <span className="queue-badge cued">{t('cued_badge')}</span>}
                     </div>
                     <div className="queue-item-artist">{track.artist}</div>
                 </div>

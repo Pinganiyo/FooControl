@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { getServerUrl, setServerUrl, scanLocalNetwork } from '../api/network';
 import { getPlayerState } from '../api/beefweb';
+import { useTranslation } from '../contexts/TranslationContext';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 
 const isNative = Capacitor.isNativePlatform();
 
 export default function Settings() {
+    const { t, language, setLanguage } = useTranslation();
     const [url, setUrl] = useState(getServerUrl());
     const [adaptiveColor, setAdaptiveColor] = useState(() => {
         return localStorage.getItem('adaptive_color_enabled') === 'true';
@@ -42,13 +44,13 @@ export default function Settings() {
 
     const handleSave = () => {
         setServerUrl(url);
-        setSuccess('Settings saved!');
+        setSuccess(t('settings_saved'));
         setTimeout(() => setSuccess(''), 3000);
     };
 
     const handleScan = async () => {
         setIsScanning(true);
-        setScanProgress('Starting network scan...');
+        setScanProgress(t('scanning'));
         setError('');
         setSuccess('');
         
@@ -57,12 +59,12 @@ export default function Settings() {
             if (foundUrl) {
                 setUrl(foundUrl);
                 setServerUrl(foundUrl);
-                setSuccess(`Found server at ${foundUrl}!`);
+                setSuccess(`${t('found_server')} ${foundUrl}`);
             } else {
-                setError('No foobar2000 server found on local network. Ensure Beefweb is running and "Allow file system access" is enabled.');
+                setError(t('no_server_found'));
             }
         } catch (err) {
-            setError('Scan failed: ' + err.message);
+            setError(`${t('scan_failed')} ${err.message}`);
         } finally {
             setIsScanning(false);
             setScanProgress('');
@@ -85,15 +87,15 @@ export default function Settings() {
 
     return (
         <div className="settings-container">
-            <h2 className="settings-title">Menu & Settings</h2>
+            <h2 className="settings-title">{t('settings_title')}</h2>
 
             <div className="settings-section">
-                <h3>Customization</h3>
-                <p className="settings-help">Personalize your experience with adaptive themes.</p>
+                <h3>{t('customization')}</h3>
+                <p className="settings-help">{t('adaptive_ui_help')}</p>
                 <div className="setting-control">
                     <div className="setting-label">
-                        <span>Adaptive UI Color</span>
-                        <p className="settings-help" style={{margin:0}}>Pull accent colors from the currently playing album cover.</p>
+                        <span>{t('adaptive_ui')}</span>
+                        <p className="settings-help" style={{margin:0}}>{t('adaptive_ui_help')}</p>
                     </div>
                     <label className="switch">
                         <input 
@@ -107,14 +109,34 @@ export default function Settings() {
             </div>
             
             <div className="settings-section">
-                <h3>Server Connection</h3>
-                <p className="settings-help">The app needs to connect to the foobar2000 Beefweb API. If you are on the same Wi-Fi, you can auto-discover it.</p>
+                <h3>{t('regional')}</h3>
+                <p className="settings-help">{t('language_help')}</p>
+                <div className="setting-control">
+                    <div className="setting-label">
+                        <span>{t('language')}</span>
+                        <p className="settings-help" style={{margin:0}}>{t('language_help')}</p>
+                    </div>
+                    <select 
+                        className="settings-input" 
+                        style={{width:'auto', minWidth:'120px'}} 
+                        value={language}
+                        onChange={(e) => setLanguage(e.target.value)}
+                    >
+                        <option value="en">English (US)</option>
+                        <option value="es">Español</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div className="settings-section">
+                <h3>{t('server_conn')}</h3>
+                <p className="settings-help">{t('server_help')}</p>
                 
                 <div className="input-group">
                     <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
-                        <label>Server URL</label>
+                        <label>{t('server_url')}</label>
                         <span className={`conn-indicator ${connStatus}`}>
-                            {connStatus === 'connected' ? '● Connected' : connStatus === 'checking' ? '○ Checking...' : '● Disconnected'}
+                            {connStatus === 'connected' ? `● ${t('connected')}` : connStatus === 'checking' ? `○ ${t('checking')}` : `● ${t('disconnected')}`}
                         </span>
                     </div>
                     <input 
@@ -127,13 +149,13 @@ export default function Settings() {
                 </div>
 
                 <div className="settings-actions">
-                    <button className="btn-save" onClick={handleSave}>Save Settings</button>
+                    <button className="btn-save" onClick={handleSave}>{t('save_settings')}</button>
                     <button 
                         className={`btn-scan ${isScanning ? 'loading' : ''}`} 
                         onClick={handleScan}
                         disabled={isScanning}
                     >
-                        {isScanning ? 'Scanning...' : 'Auto-Discover Server'}
+                        {isScanning ? t('scanning') : t('auto_discover')}
                     </button>
                 </div>
 
@@ -143,9 +165,9 @@ export default function Settings() {
             </div>
 
             <div className="settings-section">
-                <h3>About</h3>
+                <h3>{t('about')}</h3>
                 <p>FooControl v1.0.0</p>
-                <p className="settings-help">Premium foobar2000 controller for Android & PWA.</p>
+                <p className="settings-help">{t('premium_desc')}</p>
             </div>
         </div>
     );

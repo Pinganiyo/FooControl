@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import FolderBrowser from './FolderBrowser';
 import ArtistBrowser from './ArtistBrowser';
+import { useTranslation } from '../contexts/TranslationContext';
 import ProgressiveImage from './ProgressiveImage';
 import { getApiUrl } from '../api/network';
 import { getArtworkCacheKey } from '../api/artwork';
 
-export default function Explorer({ library, isSyncing, syncStatus, isArtworkCaching, artworkCacheStatus, onSync, onDeepSync, onOpenAlbum, onOpenMenu }) {
+export default function Explorer({ library, isSyncing, syncStatus, isArtworkCaching, artworkCacheStatus, onSync, onDeepSync, onOpenAlbum, onOpenMenu, onShuffleArtist }) {
+    const { t } = useTranslation();
     const [view, setView] = useState('menu'); // 'menu', 'albums', 'folders', 'artists', or 'artist_albums'
     const [selectedArtist, setSelectedArtist] = useState(null);
     const [showDeepSyncSetup, setShowDeepSyncSetup] = useState(false);
@@ -67,7 +69,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
         return (
             <div className="explorer-container syncing">
                 <div className="fancy-spinner"></div>
-                <h2>Syncing Library...</h2>
+                <h2>{t('syncing_library')}</h2>
                 <p>{syncStatus}</p>
             </div>
         );
@@ -75,11 +77,11 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
 
     const getTitle = () => {
         switch(view) {
-            case 'albums': return 'All Albums';
-            case 'artists': return 'Artists';
-            case 'artist_albums': return selectedArtist ? selectedArtist : 'Artist Albums';
-            case 'folders': return 'Folder Structure';
-            default: return 'Explore Library';
+            case 'albums': return t('all_albums');
+            case 'artists': return t('artists');
+            case 'artist_albums': return selectedArtist ? selectedArtist : t('artist_albums');
+            case 'folders': return t('folders');
+            default: return t('explore_library');
         }
     };
 
@@ -94,7 +96,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                             } else {
                                 setView('menu');
                             }
-                        }} title="Back">
+                        }} title={t('back')}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                 <path d="M19 12H5M12 19l-7-7 7-7"/>
                             </svg>
@@ -104,18 +106,31 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                 </div>
 
                 <div className="explorer-actions">
-                    <button 
-                        className={`sync-btn-small ${showDeepSyncSetup ? 'active' : ''}`} 
-                        onClick={() => setShowDeepSyncSetup(!showDeepSyncSetup)} 
-                        title="Deep Sync Settings"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                        </svg>
-                    </button>
+                    {view !== 'artist_albums' && view !== 'menu' && (
+                        <button 
+                            className={`sync-btn-small ${showDeepSyncSetup ? 'active' : ''}`} 
+                            onClick={() => setShowDeepSyncSetup(!showDeepSyncSetup)} 
+                            title={t('deep_sync')}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <circle cx="12" cy="12" r="3"></circle>
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                            </svg>
+                        </button>
+                    )}
+                    {view === 'artist_albums' && (
+                        <button 
+                            className="sync-btn-small" 
+                            onClick={() => onShuffleArtist(selectedArtist)} 
+                            title={t('shuffle_artist')}
+                        >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
+                            </svg>
+                        </button>
+                    )}
                     {(view === 'albums' || view === 'artist_albums') && (
-                        <button className="sync-btn-small" onClick={toggleGrid} title="Change Layout">
+                        <button className="sync-btn-small" onClick={toggleGrid} title={t('change_layout')}>
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <rect x="3" y="3" width="7" height="7"></rect>
                                 <rect x="14" y="3" width="7" height="7"></rect>
@@ -124,18 +139,20 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                             </svg>
                         </button>
                     )}
-                    <button className={`sync-btn-small ${isArtworkCaching ? 'artwork-caching' : ''}`} onClick={onSync} title={isArtworkCaching ? artworkCacheStatus : 'Sync Library'}>
-                        <svg className={isSyncing ? 'spinning' : ''} width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-                        </svg>
-                    </button>
+                    {view !== 'artist_albums' && view !== 'menu' && (
+                        <button className={`sync-btn-small ${isArtworkCaching ? 'artwork-caching' : ''}`} onClick={onSync} title={isArtworkCaching ? artworkCacheStatus : t('sync_library')}>
+                            <svg className={isSyncing ? 'spinning' : ''} width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </header>
 
             {showDeepSyncSetup && (
                 <div className="deep-sync-overlay">
-                    <h3>Deep Library Search</h3>
-                    <p>Paste the folder paths to your music collection (one per line):</p>
+                    <h3>{t('deep_search_title')}</h3>
+                    <p>{t('deep_search_help')}</p>
                     <textarea 
                         className="deep-sync-textarea" 
                         value={deepSyncPaths} 
@@ -143,12 +160,12 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                         placeholder="C:\Music"
                     />
                     <div className="deep-sync-actions">
-                        <button className="btn-secondary" onClick={() => setShowDeepSyncSetup(false)}>Cancel</button>
+                        <button className="btn-secondary" onClick={() => setShowDeepSyncSetup(false)}>{t('cancel')}</button>
                         <button className="btn-primary" onClick={() => {
                             const paths = deepSyncPaths.split('\n').map(p => p.trim()).filter(p => p);
                             onDeepSync(paths);
                             setShowDeepSyncSetup(false);
-                        }}>Start Deep Scan</button>
+                        }}>{t('start_deep_scan')}</button>
                     </div>
                 </div>
             )}
@@ -156,7 +173,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
             {isArtworkCaching && (
                 <div className="sync-banner artwork-caching-banner">
                     <div className="mini-spinner"></div>
-                    <span className="sync-status-msg">🎨 {artworkCacheStatus || 'Caching artwork...'}</span>
+                    <span className="sync-status-msg">🎨 {artworkCacheStatus || t('artwork_caching')}</span>
                 </div>
             )}
 
@@ -169,19 +186,19 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
 
             {(view === 'albums' || view === 'artist_albums') && (
                 <div className="filter-bar">
-                    <span className="filter-label">Sort by:</span>
+                    <span className="filter-label">{t('sort_by')}</span>
                     <select 
                         className="sort-select" 
                         value={sortBy} 
                         onChange={(e) => setSortBy(e.target.value)}
                     >
-                        <option value="name">Name (A-Z)</option>
-                        <option value="year">Year (Newest)</option>
-                        {view !== 'artist_albums' && <option value="artist">Artist (A-Z)</option>}
-                        <option value="tracks">Size (# Tracks)</option>
+                        <option value="name">{t('sort_name')}</option>
+                        <option value="year">{t('sort_year')}</option>
+                        {view !== 'artist_albums' && <option value="artist">{t('sort_artist')}</option>}
+                        <option value="tracks">{t('sort_tracks')}</option>
                     </select>
                     <div className="album-count">
-                        {sortedAlbums.length} albums
+                        {sortedAlbums.length} {sortedAlbums.length === 1 ? t('album') : t('albums')}
                     </div>
                 </div>
             )}
@@ -194,8 +211,8 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>
                             </div>
                             <div className="menu-card-info">
-                                <h3>Artists</h3>
-                                <p>{library?.artists?.length || 0} Artists</p>
+                                <h3>{t('artists')}</h3>
+                                <p>{library?.artists?.length || 0} {t('artists')}</p>
                             </div>
                         </div>
 
@@ -204,8 +221,8 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /></svg>
                             </div>
                             <div className="menu-card-info">
-                                <h3>Albums</h3>
-                                <p>{library?.albums?.length || 0} Collections</p>
+                                <h3>{t('all_albums')}</h3>
+                                <p>{library?.albums?.length || 0} {t('collections')}</p>
                             </div>
                         </div>
 
@@ -214,8 +231,8 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
                             </div>
                             <div className="menu-card-info">
-                                <h3>Folders</h3>
-                                <p>{library?.tracksCount || 0} Files Found</p>
+                                <h3>{t('folders')}</h3>
+                                <p>{library?.tracksCount || 0} {t('files_found')}</p>
                             </div>
                         </div>
                     </div>
@@ -234,7 +251,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                                 <div className="album-card-info">
                                     <div className="album-card-title">{album.title}</div>
                                     <div className="album-card-artist">
-                                        {view !== 'artist_albums' && `${album.artist} • `}{album.trackCount} {album.trackCount === 1 ? 'track' : 'tracks'}
+                                        {view !== 'artist_albums' && `${album.artist} • `}{album.trackCount} {album.trackCount === 1 ? t('track') : t('tracks')}
                                     </div>
                                 </div>
                             </div>
@@ -248,6 +265,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                             setSelectedArtist(artistName);
                             setView('artist_albums');
                         }} 
+                        onShuffleArtist={onShuffleArtist}
                     />
                 ) : (
                     <FolderBrowser onOpenAlbum={onOpenAlbum} onOpenMenu={onOpenMenu} />

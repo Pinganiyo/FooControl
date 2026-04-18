@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAllCachedTracks } from '../api/libraryCache';
+import { useTranslation } from '../contexts/TranslationContext';
 import { getArtworkCacheKey, getLocalArtworkUrl } from '../api/artwork';
 import { getApiUrl } from '../api/network';
 import ProgressiveImage from './ProgressiveImage';
@@ -7,6 +8,7 @@ import { playAlbumShuffled } from '../api/beefweb';
 import { useLongPress } from '../hooks/useLongPress';
 
 export default function FolderBrowser({ onOpenAlbum, onOpenMenu }) {
+    const { t } = useTranslation();
     const [tracks, setTracks] = useState([]);
     const [currentPath, setCurrentPath] = useState('');
     const [entries, setEntries] = useState([]);
@@ -22,9 +24,44 @@ export default function FolderBrowser({ onOpenAlbum, onOpenMenu }) {
         const allTracks = await getAllCachedTracks();
         if (allTracks && allTracks.length > 0) {
             setTracks(allTracks);
-            buildEntries('', allTracks);
+            const root = getCommonPathPrefix(allTracks);
+            setCurrentPath(root);
+            buildEntries(root, allTracks);
         }
         setLoading(false);
+    };
+
+    /**
+     * Finds the deepest common directory shared by all tracks.
+     */
+    const getCommonPathPrefix = (allTracks) => {
+        if (!allTracks || allTracks.length === 0) return '';
+        const paths = allTracks
+            .map(t => t.path?.replace(/\//g, '\\'))
+            .filter(Boolean);
+        
+        if (paths.length === 0) return '';
+        if (paths.length === 1) {
+            const parts = paths[0].split('\\');
+            parts.pop();
+            return parts.join('\\');
+        }
+
+        // Find common prefix by splitting and comparing
+        const splitPaths = paths.map(p => p.split('\\'));
+        let commonParts = [];
+        const first = splitPaths[0];
+
+        for (let i = 0; i < first.length; i++) {
+            const part = first[i];
+            if (splitPaths.every(p => p[i] === part)) {
+                commonParts.push(part);
+            } else {
+                break;
+            }
+        }
+
+        return commonParts.join('\\');
     };
 
     /**
@@ -150,10 +187,10 @@ export default function FolderBrowser({ onOpenAlbum, onOpenMenu }) {
         return `${getApiUrl()}/artwork/${track.playlistId}/${track.itemIndex}?width=150`;
     };
 
-    if (loading) return <div className="placeholder">Loading Folder View...</div>;
+    if (loading) return <div className="placeholder">{t('explore_library')}...</div>;
     if (tracks.length === 0) return (
         <div className="empty-message" style={{ padding: '32px', textAlign: 'center', opacity: 0.5 }}>
-            No tracks indexed.<br />Run a Deep Sync first!
+            {t('no_matches')}
         </div>
     );
 
@@ -172,7 +209,7 @@ export default function FolderBrowser({ onOpenAlbum, onOpenMenu }) {
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginRight: 6, opacity: 0.5, flexShrink: 0 }}>
                             <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
                         </svg>
-                        {currentPath ? currentPath.split('\\').pop() : 'Folders'}
+                        {currentPath ? currentPath.split('\\').pop() : t('folders')}
                     </div>
                 </div>
 
@@ -190,7 +227,7 @@ export default function FolderBrowser({ onOpenAlbum, onOpenMenu }) {
                                 <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z" />
                             </svg>
                         )}
-                        Shuffle All
+                        {t('shuffle')}
                     </button>
                 </div>
             </header>

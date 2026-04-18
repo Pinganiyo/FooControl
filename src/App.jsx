@@ -8,18 +8,20 @@ import Search from './components/Search';
 import { ExplorerScreen, SearchScreen } from './components/Placeholders';
 import Settings from './components/Settings';
 import { useBeefweb } from './hooks/useBeefweb';
-import { getCachedData, performFullSync, performDeepSync, cacheAllArtwork } from './api/libraryCache';
+import { useTranslation } from './contexts/TranslationContext';
+import { getCachedData, performFullSync, performDeepSync, cacheAllArtwork, getAllCachedTracks } from './api/libraryCache';
 import { getDominantColor, applyThemeColor } from './api/colorExtractor';
 import { clearLocalArtworkCache, getArtworkCacheKey, preCacheArtwork } from './api/artwork';
 import { getApiUrl, getServerUrlAsync, getServerUrl } from './api/network';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import ContextMenu from './components/ContextMenu';
-import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist } from './api/beefweb';
+import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled } from './api/beefweb';
 
 const isNative = Capacitor.isNativePlatform();
 
 function App() {
+  const { t } = useTranslation();
   const beefwebState = useBeefweb();
   const [currentView, setCurrentView] = useState('player');
   const [selectedAlbum, setSelectedAlbum] = useState(null);
@@ -84,7 +86,7 @@ function App() {
 
   const handleGlobalSync = async () => {
     setIsSyncing(true);
-    setSyncStatus('Starting Sync...');
+    setSyncStatus(t('starting_sync'));
     try {
       const result = await performFullSync((msg) => setSyncStatus(msg));
       setLibraryData(result);
@@ -95,7 +97,7 @@ function App() {
       }
     } catch (e) {
       console.error("Auto-sync failed", e);
-      setSyncStatus('Sync Failed');
+      setSyncStatus(t('sync_failed'));
     } finally {
       setIsSyncing(false);
     }
@@ -103,7 +105,7 @@ function App() {
 
   const handleDeepSync = async (paths) => {
     setIsSyncing(true);
-    setSyncStatus('Starting Deep Sync...');
+    setSyncStatus(t('starting_deep_sync'));
     try {
       const result = await performDeepSync(paths, (msg) => setSyncStatus(msg));
       setLibraryData(result);
@@ -113,7 +115,7 @@ function App() {
       }
     } catch (e) {
       console.error("Deep sync failed", e);
-      setSyncStatus(`Error: ${e.message}`);
+      setSyncStatus(`${t('sync_error')} ${e.message}`);
     } finally {
       setIsSyncing(false);
     }
@@ -121,7 +123,7 @@ function App() {
 
   const startArtworkCaching = async (albums) => {
     setIsArtworkCaching(true);
-    setArtworkCacheStatus('Caching artwork...');
+    setArtworkCacheStatus(t('caching_artwork'));
     try {
       await cacheAllArtwork(albums, (msg) => setArtworkCacheStatus(msg), getDominantColor);
       clearLocalArtworkCache(); // Pick up the newly cached covers
@@ -268,6 +270,29 @@ function App() {
     }
   };
 
+  const handleShuffleArtist = async (artistName) => {
+    try {
+      const allTracks = await getAllCachedTracks();
+      if (!allTracks || allTracks.length === 0) return;
+
+      const query = artistName.toLowerCase();
+      const artistTracks = allTracks.filter(t => {
+        const trackArtist = (t.artist || '').toLowerCase();
+        const albumArtist = (t.albumArtist || '').toLowerCase();
+        return trackArtist === query || albumArtist === query;
+      });
+
+      if (artistTracks.length > 0) {
+        await playAlbumShuffled(artistTracks);
+        if (beefwebState.refresh) beefwebState.refresh();
+        // Switch to player to see the result
+        setCurrentView('player');
+      }
+    } catch (e) {
+      console.error("Shuffle artist failed", e);
+    }
+  };
+
   return (
     <>
       <div className="status-bar-gradient" />
@@ -298,6 +323,7 @@ function App() {
               setCurrentView('album');
             }} 
             onOpenMenu={handleOpenMenu}
+            onShuffleArtist={handleShuffleArtist}
           />
         </div>
         <div className={`screen ${currentView === 'search' ? 'active' : ''}`}>
