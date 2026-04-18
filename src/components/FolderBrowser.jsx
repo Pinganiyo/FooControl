@@ -249,13 +249,20 @@ export default function FolderBrowser({ onOpenAlbum, onOpenMenu }) {
 }
 
 function FileRow({ entry, artSrc, cacheKey, onOpenMenu }) {
-    // Standard file click (single tap) logic — here we just placeholder it as null or a direct play
-    // but the user didn't specify one, so we just use long press for menu.
-    const longPressProps = useLongPress(onOpenMenu, () => {});
+    // Row handles long press only
+    const longPressProps = useLongPress(onOpenMenu, null);
+
+    const handlePlay = (e) => {
+        // Here we'd normally call a click handler passed from FolderBrowser
+        // For now, FolderBrowser doesn't have a single-click 'play' logic 
+        // that's different from the menu, but we'll prepare the structure.
+        e.stopPropagation();
+        // If there was a playTrack function, we'd call it here.
+    };
 
     return (
         <div className="folder-entry file" {...longPressProps}>
-            <div className="folder-entry-cover">
+            <div className="folder-entry-cover" onClick={handlePlay}>
                 <ProgressiveImage
                     src={artSrc}
                     alt={entry.name}
@@ -263,7 +270,7 @@ function FileRow({ entry, artSrc, cacheKey, onOpenMenu }) {
                     cacheKey={cacheKey}
                 />
             </div>
-            <div className="entry-info">
+            <div className="entry-info" onClick={handlePlay}>
                 <div className="entry-name">{entry.name}</div>
                 <div className="entry-meta">
                     {entry.track.artist}{entry.track.album ? ` • ${entry.track.album}` : ''}

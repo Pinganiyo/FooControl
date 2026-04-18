@@ -5,7 +5,7 @@ import ProgressiveImage from './ProgressiveImage';
 import { getApiUrl } from '../api/network';
 import { getArtworkCacheKey } from '../api/artwork';
 
-export default function Explorer({ library, isSyncing, syncStatus, isArtworkCaching, artworkCacheStatus, onSync, onDeepSync, onOpenAlbum }) {
+export default function Explorer({ library, isSyncing, syncStatus, isArtworkCaching, artworkCacheStatus, onSync, onDeepSync, onOpenAlbum, onOpenMenu }) {
     const [view, setView] = useState('menu'); // 'menu', 'albums', 'folders', 'artists', or 'artist_albums'
     const [selectedArtist, setSelectedArtist] = useState(null);
     const [showDeepSyncSetup, setShowDeepSyncSetup] = useState(false);

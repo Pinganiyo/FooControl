@@ -635,23 +635,13 @@ body {
   overflow: hidden;
 }
 
-.queue-item-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  width: 100%;
-  overflow: hidden;
-  margin-bottom: 0.2rem;
-}
-
 .queue-item-title {
-  font-size: 1rem;
   font-weight: 600;
+  font-size: 1.05rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-shrink: 1;
+  margin-bottom: 0.25rem;
 }
 
 .queue-item-artist {

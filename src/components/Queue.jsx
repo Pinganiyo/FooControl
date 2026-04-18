@@ -64,8 +64,8 @@ export default function Queue({ beefwebState, onClose, manualQueueOffset = 0 }) 
                                 </div>
                             </div>
                             <div className="queue-item-info">
-                                <div className="queue-item-title-row">
-                                    <span className="queue-item-title">{track.title}</span>
+                                <div className="queue-item-title">
+                                    {track.title}
                                     {isNext && <span className="queue-badge next">NEXT</span>}
                                     {isCued && !isNext && <span className="queue-badge cued">CUED</span>}
                                 </div>
@@ -81,9 +81,7 @@ export default function Queue({ beefwebState, onClose, manualQueueOffset = 0 }) 
                             <div className="queue-item-icon-fallback" style={{fontSize: '1.5rem'}}>🔀</div>
                         </div>
                         <div className="queue-item-info">
-                            <div className="queue-item-title-row">
-                                <span className="queue-item-title">Shuffle Mode</span>
-                            </div>
+                            <div className="queue-item-title">Shuffle Mode</div>
                             <div className="queue-item-artist">Next tracks will be selected randomly</div>
                         </div>
                     </div>

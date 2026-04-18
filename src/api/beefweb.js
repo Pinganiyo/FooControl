@@ -231,42 +231,34 @@ export async function getAlbumTracks(playlistId, albumName) {
  * Creates/reuses a managed 'FooControl_Queue' playlist in foobar2000.
  * @param {Array} tracks - Array of track objects with a `path` property
  */
+/**
+ * Shuffles a list and plays it in the managed FooControl playlist.
+ */
 export async function playAlbumShuffled(tracks) {
     if (!tracks || tracks.length === 0) return;
-    const BASE_URL = getApiUrl();
-
-    // Fisher-Yates shuffle on a copy
+    
     const shuffled = [...tracks];
     for (let i = shuffled.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
-    // 1. Get or create FooControl playlist
-    const plRes = await nativeFetch({ url: `${BASE_URL}/playlists`, method: 'GET' });
-    const plData = await plRes.json();
-    let queuePl = (plData.playlists || []).find(p => p.title === 'FooControl');
+    await playTracksInOrder(shuffled);
+}
 
-    let plId;
-    if (!queuePl) {
-        const createRes = await nativeFetch({
-            url: `${BASE_URL}/playlists/add`,
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            data: { title: 'FooControl' }
-        });
-        const created = await createRes.json();
-        plId = created.id;
-    } else {
-        plId = queuePl.id;
-        // Clear existing contents using the correct Beefweb endpoint
-        await nativeFetch({ url: `${BASE_URL}/playlists/${plId}/clear`, method: 'POST' });
-    }
+/**
+ * Technical helper to clear FooControl playlist and add tracks in the literal order provided.
+ */
+export async function playTracksInOrder(tracks) {
+    if (!tracks || tracks.length === 0) return;
+    const BASE_URL = getApiUrl();
+    const plId = await getOrCreatePlaylist();
+    
+    // 1. Clear existing contents
+    await nativeFetch({ url: `${BASE_URL}/playlists/${plId}/clear`, method: 'POST' });
 
-    // 2. Add shuffled track paths one by one
-    // We add them individually because batch-adding triggers Foobar2000's auto-sorting,
-    // which undoes our shuffle. Sequential appends guarantee the exact randomized order.
-    const paths = shuffled.map(t => t.path).filter(Boolean);
+    // 2. Add track paths one by one to ensure Foobar respects the sequence
+    const paths = tracks.map(t => t.path).filter(Boolean);
     for (const path of paths) {
         await nativeFetch({
             url: `${BASE_URL}/playlists/${plId}/items/add`,
@@ -329,8 +321,8 @@ export async function playContextShuffled(tracks, startIndex) {
     // 3. Recombine
     const finalOrder = [firstTrack, ...others];
     
-    // 4. Use existing playAlbumShuffled-like logic
-    await playAlbumShuffled(finalOrder);
+    // 4. Play in that exact order (selected first, then shuffled rest)
+    await playTracksInOrder(finalOrder);
 }
 
 /**

@@ -87,18 +87,24 @@ export default function Search({ beefwebState, onOpenMenu }) {
 }
 
 function SearchItem({ track, onClick, onOpenMenu }) {
-    const longPressProps = useLongPress(onOpenMenu, onClick);
+    // Row handles long press only
+    const longPressProps = useLongPress(onOpenMenu, null);
+
+    const handlePlay = (e) => {
+        e.stopPropagation();
+        onClick();
+    };
     
     return (
         <div className="search-result-item" {...longPressProps}>
-            <div className="search-result-art">
+            <div className="search-result-art" onClick={handlePlay}>
                 <ProgressiveImage 
                     src={`${getApiUrl()}/artwork/${track.playlistId}/${track.itemIndex}?_t=${encodeURIComponent(track.title)}&width=100`}
                     alt=""
                     cacheKey={getArtworkCacheKey(track.artist, track.album)}
                 />
             </div>
-            <div className="search-result-info">
+            <div className="search-result-info" onClick={handlePlay}>
                 <div className="search-result-title">{track.title}</div>
                 <div className="search-result-meta">{track.artist} • {track.album}</div>
             </div>

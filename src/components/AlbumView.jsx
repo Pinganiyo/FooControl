@@ -212,12 +212,20 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
 }
 
 function TrackRow({ track, index, isActive, isMultiDisc, onClick, onOpenMenu, formatTime }) {
-    const longPressProps = useLongPress(onOpenMenu, onClick);
+    // Row handles long press only (for menu)
+    const longPressProps = useLongPress(onOpenMenu, null);
+
+    const handleTextClick = (e) => {
+        e.stopPropagation();
+        onClick();
+    };
 
     return (
         <div className={`album-track-item ${isActive ? 'active' : ''}`} {...longPressProps}>
-            <div className="album-track-num">{track.trackNum > 0 ? track.trackNum : index + 1}</div>
-            <div className="album-track-info">
+            <div className="album-track-num" onClick={handleTextClick}>
+                {track.trackNum > 0 ? track.trackNum : index + 1}
+            </div>
+            <div className="album-track-info" onClick={handleTextClick}>
                 <div className="album-track-title">{track.title}</div>
                 {isMultiDisc && track.artist && (
                     <div className="album-track-artist">{track.artist}</div>
