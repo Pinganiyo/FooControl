@@ -376,3 +376,19 @@ export async function addTracksToPlaylist(playlistId, paths) {
         data: { items: paths }
     });
 }
+
+/**
+ * Moves items within a playlist.
+ */
+export async function movePlaylistItems(playlistId, sourceIndices, targetIndex) {
+    const BASE_URL = getApiUrl();
+    await nativeFetch({
+        url: `${BASE_URL}/playlists/${playlistId}/items/move`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data: { 
+            items: sourceIndices,
+            targetIndex: targetIndex
+        }
+    });
+}
