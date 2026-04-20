@@ -58,15 +58,15 @@ export default function Settings({ beefwebState }) {
         setShowResyncPrompt(false);
         setIsResyncing(true);
         setError('');
-        
+
         try {
             // 1. Save new quality
             await Preferences.set({ key: 'artwork_quality', value: pendingQuality });
             setArtworkQuality(pendingQuality);
-            
+
             // 2. Clear cache
             await clearArtworkFilesystemCache();
-            
+
             // 3. Trigger resync
             const library = await getCachedData('library_data');
             if (library && library.albums) {
@@ -91,7 +91,7 @@ export default function Settings({ beefwebState }) {
         setScanProgress(t('scanning'));
         setError('');
         setSuccess('');
-        
+
         try {
             const foundUrl = await scanLocalNetwork((msg) => setScanProgress(msg));
             if (foundUrl) {
@@ -131,12 +131,12 @@ export default function Settings({ beefwebState }) {
                 <div className="setting-control">
                     <div className="setting-label">
                         <span>{t('adaptive_ui')}</span>
-                        <p className="settings-help" style={{margin:0}}>{t('adaptive_ui_help')}</p>
+                        <p className="settings-help" style={{ margin: 0 }}>{t('adaptive_ui_help')}</p>
                     </div>
                     <label className="switch">
-                        <input 
-                            type="checkbox" 
-                            checked={adaptiveColor} 
+                        <input
+                            type="checkbox"
+                            checked={adaptiveColor}
                             onChange={(e) => handleToggleAdaptive(e.target.checked)}
                         />
                         <span className="slider round"></span>
@@ -148,8 +148,8 @@ export default function Settings({ beefwebState }) {
                 <h3>{t('playback')}</h3>
                 <div className="setting-control-vertical">
                     <div className="setting-label">
-                        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--accent-color)'}}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--accent-color)' }}>
                                 <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
                                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
                             </svg>
@@ -157,17 +157,17 @@ export default function Settings({ beefwebState }) {
                         </div>
                     </div>
                     <div className="volume-slider-container">
-                        <input 
-                            type="range" 
-                            className="volume-range-slider" 
-                            min={beefwebState?.playerState?.volume?.min || -100} 
-                            max={beefwebState?.playerState?.volume?.max || 0} 
-                            step="0.5" 
-                            value={beefwebState?.playerState?.volume?.value || 0} 
+                        <input
+                            type="range"
+                            className="volume-range-slider"
+                            min="80"
+                            max="0"
+                            step="0.5"
+                            value={Math.max(-min, beefwebState?.playerState?.volume?.value || 0)}
                             onChange={(e) => setVolume(parseFloat(e.target.value))}
                         />
                         <span className="volume-value-display">
-                            {Math.round((( (beefwebState?.playerState?.volume?.value || 0) + 100) / 100) * 100)}%
+                            {Math.round(((Math.max(-min, beefwebState?.playerState?.volume?.value || 0) + min) / min) * 100)}%
                         </span>
                     </div>
                 </div>
@@ -180,9 +180,9 @@ export default function Settings({ beefwebState }) {
                     <div className="setting-label">
                         <span>{t('artwork_quality_label')}</span>
                     </div>
-                    <select 
-                        className="settings-input" 
-                        style={{width:'auto', minWidth:'150px'}} 
+                    <select
+                        className="settings-input"
+                        style={{ width: 'auto', minWidth: '150px' }}
                         value={artworkQuality}
                         onChange={(e) => handleQualityChange(e.target.value)}
                         disabled={isResyncing}
@@ -208,25 +208,25 @@ export default function Settings({ beefwebState }) {
                 )}
 
                 {isResyncing && resyncProgress && (
-                    <div className="sync-status-container" style={{marginTop:'1rem'}}>
+                    <div className="sync-status-container" style={{ marginTop: '1rem' }}>
                         <div className="sync-progress-bar">
-                            <div className="sync-progress-fill" style={{width: `${resyncProgress.perc}%`}}></div>
+                            <div className="sync-progress-fill" style={{ width: `${resyncProgress.perc}%` }}></div>
                         </div>
                         <p className="settings-help">{resyncProgress.msg}</p>
                     </div>
                 )}
             </div>
-            
+
             <div className="settings-section">
                 <h3>{t('regional')}</h3>
                 <div className="setting-control">
                     <div className="setting-label">
                         <span>{t('language')}</span>
-                        <p className="settings-help" style={{margin:0}}>{t('language_help')}</p>
+                        <p className="settings-help" style={{ margin: 0 }}>{t('language_help')}</p>
                     </div>
-                    <select 
-                        className="settings-input" 
-                        style={{width:'auto', minWidth:'120px'}} 
+                    <select
+                        className="settings-input"
+                        style={{ width: 'auto', minWidth: '120px' }}
                         value={language}
                         onChange={(e) => setLanguage(e.target.value)}
                     >
@@ -235,22 +235,22 @@ export default function Settings({ beefwebState }) {
                     </select>
                 </div>
             </div>
-            
+
             <div className="settings-section">
                 <h3>{t('server_conn')}</h3>
                 <p className="settings-help">{t('server_help')}</p>
-                
+
                 <div className="input-group">
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'baseline'}}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
                         <label>{t('server_url')}</label>
                         <span className={`conn-indicator ${connStatus}`}>
                             {connStatus === 'connected' ? `● ${t('connected')}` : connStatus === 'checking' ? `○ ${t('checking')}` : `● ${t('disconnected')}`}
                         </span>
                     </div>
-                    <input 
-                        type="text" 
-                        value={url} 
-                        onChange={(e) => setUrl(e.target.value)} 
+                    <input
+                        type="text"
+                        value={url}
+                        onChange={(e) => setUrl(e.target.value)}
                         placeholder="http://192.168.1.XX:8880"
                         className="settings-input"
                     />
@@ -258,8 +258,8 @@ export default function Settings({ beefwebState }) {
 
                 <div className="settings-actions">
                     <button className="btn-save" onClick={handleSave}>{t('save_settings')}</button>
-                    <button 
-                        className={`btn-scan ${isScanning ? 'loading' : ''}`} 
+                    <button
+                        className={`btn-scan ${isScanning ? 'loading' : ''}`}
                         onClick={handleScan}
                         disabled={isScanning}
                     >
