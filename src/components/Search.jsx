@@ -27,9 +27,9 @@ export default function Search({ beefwebState, onOpenMenu }) {
 
         const q = query.toLowerCase();
         const filtered = allTracks.filter(t => 
-            t.title.toLowerCase().includes(q) || 
-            t.artist.toLowerCase().includes(q) || 
-            t.album.toLowerCase().includes(q)
+            (t.title || '').toLowerCase().includes(q) || 
+            (t.artist || '').toLowerCase().includes(q) || 
+            (t.album || '').toLowerCase().includes(q)
         ).slice(0, 50); // Limit results for performance
 
         setResults(filtered);

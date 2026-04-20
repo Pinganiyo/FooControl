@@ -17,6 +17,7 @@ import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import ContextMenu from './components/ContextMenu';
 import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled } from './api/beefweb';
+import { initNotifications, syncPlaybackNotification } from './api/notificationManager';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -58,6 +59,9 @@ function App() {
 
   useEffect(() => {
     initLibrary();
+    if (isNative) {
+      initNotifications();
+    }
   }, []);
 
   const initLibrary = async () => {
@@ -218,6 +222,21 @@ function App() {
       }
     });
   }, [artworkUrl]);
+
+  // NOTIFICATION SYNC EFFECT
+  useEffect(() => {
+    if (!isNative) return;
+
+    const playerState = beefwebState.playerState;
+    const activeItem = playerState?.activeItem;
+    const isPlaying = playerState?.playbackState === 'playing';
+
+    if (activeItem) {
+      syncPlaybackNotification(activeItem, isPlaying, artworkUrl);
+    } else {
+      syncPlaybackNotification(null, false, null);
+    }
+  }, [beefwebState.playerState?.activeItem, beefwebState.playerState?.playbackState, artworkUrl]);
 
   const handleOpenMenu = (e, track, contextTracks = []) => {
     e.preventDefault();

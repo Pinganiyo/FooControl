@@ -536,6 +536,7 @@ async function scrapePlaylist(plId, onProgress) {
             const title = (item.columns[0] && item.columns[0] !== '?') ? item.columns[0] : fallbackTitle;
             const trackArtist = (item.columns[1] && item.columns[1] !== '?') ? item.columns[1] : fallbackArtist;
             const album = (item.columns[2] && item.columns[2] !== '?') ? item.columns[2] : fallbackAlbum;
+            const duration = parseFloat(item.columns[3]) || 0;
             const trackNum = parseInt(item.columns[4], 10) || 0;
             const dateStr = item.columns[5] || '';
             const albumArtistRaw = item.columns[6] || '';

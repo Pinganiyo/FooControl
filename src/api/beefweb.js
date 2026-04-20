@@ -4,6 +4,9 @@ import { getApiUrl } from './network';
 
 const isNative = () => window.Capacitor?.isNativePlatform();
 
+// Track the current playback population task to allow cancellation of stale ones
+let activePopulationId = 0;
+
 export async function nativeFetch(options) {
     if (isNative()) {
         const response = await CapacitorHttp.request({
@@ -273,8 +276,15 @@ export async function playTracksInOrder(tracks) {
     await playTargetItem(plId, 0);
 
     // 3. Add the rest in the background without blocking the UI
+    const opId = ++activePopulationId;
     (async () => {
         for (let i = 1; i < paths.length; i++) {
+            // If a new shuffle operation happened, abort this loop immediately
+            if (opId !== activePopulationId) {
+                console.log(`[FooControl] Aborting stale playback task ${opId}`);
+                break;
+            }
+
             try {
                 await nativeFetch({
                     url: `${BASE_URL}/playlists/${plId}/items/add`,
