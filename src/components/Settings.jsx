@@ -6,10 +6,11 @@ import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import { clearArtworkFilesystemCache, getArtworkQuality } from '../api/artwork';
 import { getCachedData, cacheAllArtwork } from '../api/libraryCache';
+import { setVolume } from '../api/beefweb';
 
 const isNative = Capacitor.isNativePlatform();
 
-export default function Settings() {
+export default function Settings({ beefwebState }) {
     const { t, language, setLanguage } = useTranslation();
     const [url, setUrl] = useState(getServerUrl());
     const [adaptiveColor, setAdaptiveColor] = useState(() => {
@@ -140,6 +141,35 @@ export default function Settings() {
                         />
                         <span className="slider round"></span>
                     </label>
+                </div>
+            </div>
+
+            <div className="settings-section">
+                <h3>{t('playback')}</h3>
+                <div className="setting-control-vertical">
+                    <div className="setting-label">
+                        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color:'var(--accent-color)'}}>
+                                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            </svg>
+                            <span>{t('volume_label')}</span>
+                        </div>
+                    </div>
+                    <div className="volume-slider-container">
+                        <input 
+                            type="range" 
+                            className="volume-range-slider" 
+                            min={beefwebState?.playerState?.volume?.min || -100} 
+                            max={beefwebState?.playerState?.volume?.max || 0} 
+                            step="0.5" 
+                            value={beefwebState?.playerState?.volume?.value || 0} 
+                            onChange={(e) => setVolume(parseFloat(e.target.value))}
+                        />
+                        <span className="volume-value-display">
+                            {Math.round((( (beefwebState?.playerState?.volume?.value || 0) + 100) / 100) * 100)}%
+                        </span>
+                    </div>
                 </div>
             </div>
 

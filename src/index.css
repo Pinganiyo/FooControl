@@ -2375,3 +2375,54 @@ input:checked+.slider:before {
   box-shadow: 0 0 10px var(--accent-glow);
   transition: width 0.3s ease-out;
 }
+
+.setting-control-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.volume-slider-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.volume-range-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 6px;
+  background: var(--progress-bg);
+  border-radius: 5px;
+  outline: none;
+}
+
+.volume-range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-glow);
+  border: 2px solid var(--accent-color);
+  transition: transform 0.2s;
+}
+
+.volume-range-slider::-webkit-slider-thumb:active {
+  transform: scale(1.2);
+}
+
+.volume-value-display {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-color);
+  min-width: 45px;
+  text-align: right;
+}

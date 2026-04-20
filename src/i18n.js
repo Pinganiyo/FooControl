@@ -110,7 +110,9 @@ export const translations = {
     quality_800: '800p (Recommended)',
     quality_1080: '1080p (High)',
     quality_1200: '1200p (Ultra)',
-    quality_max: 'Original Quality'
+    quality_max: 'Original Quality',
+    playback: 'Playback Control',
+    volume_label: 'Volume'
   },
   es: {
     // Navigation
@@ -223,6 +225,8 @@ export const translations = {
     quality_800: '800p (Recomendado)',
     quality_1080: '1080p (Alto)',
     quality_1200: '1200p (Ultra)',
-    quality_max: 'Calidad Original'
+    quality_max: 'Calidad Original',
+    playback: 'Control de Reproducción',
+    volume_label: 'Volumen'
   }
 };

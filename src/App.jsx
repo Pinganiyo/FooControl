@@ -357,7 +357,7 @@ function App() {
           <Search beefwebState={beefwebState} onOpenMenu={handleOpenMenu} />
         </div>
         <div className={`screen ${currentView === 'settings' ? 'active' : ''}`}>
-          <Settings />
+          <Settings beefwebState={beefwebState} />
         </div>
 
         <div className={`screen player-screen ${currentView === 'player' ? 'active' : ''}`}>
