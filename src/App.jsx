@@ -16,7 +16,7 @@ import { getApiUrl, getServerUrlAsync, getServerUrl } from './api/network';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import ContextMenu from './components/ContextMenu';
-import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled, setVolume } from './api/beefweb';
+import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled, setVolume, registerErrorCallback } from './api/beefweb';
 import { initNotifications, syncPlaybackNotification } from './api/notificationManager';
 import { VolumeButtons } from '@capacitor-community/volume-buttons';
 
@@ -57,6 +57,21 @@ function App() {
   const [syncStatus, setSyncStatus] = useState('');
   const [isArtworkCaching, setIsArtworkCaching] = useState(false);
   const [artworkCacheStatus, setArtworkCacheStatus] = useState('');
+
+  // Connection Error Feedback
+  const [connectionError, setConnectionError] = useState(null);
+  const [errorTimeout, setErrorTimeout] = useState(null);
+
+  useEffect(() => {
+    registerErrorCallback((msg) => {
+      setConnectionError(msg);
+      if (errorTimeout) clearTimeout(errorTimeout);
+      const timeout = setTimeout(() => {
+        setConnectionError(null);
+      }, 3000);
+      setErrorTimeout(timeout);
+    });
+  }, [errorTimeout]);
 
   useEffect(() => {
     initLibrary();
@@ -396,6 +411,17 @@ function App() {
         </div>
 
         {/* Global Navigation Bar */}
+        {connectionError && (
+          <div className="connection-error-bubble">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            {connectionError}
+          </div>
+        )}
+
         <BottomNav 
           currentView={currentView} 
           onChangeView={(view) => {

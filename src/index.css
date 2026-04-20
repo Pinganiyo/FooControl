@@ -2426,3 +2426,35 @@ input:checked+.slider:before {
   min-width: 45px;
   text-align: right;
 }
+
+.connection-error-bubble {
+  position: absolute;
+  bottom: 85px; /* Just above the nav bar */
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(239, 68, 68, 0.95);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+  z-index: 1000;
+  animation: slide-up-fade 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+@keyframes slide-up-fade {
+  from {
+    transform: translateX(-50%) translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+}

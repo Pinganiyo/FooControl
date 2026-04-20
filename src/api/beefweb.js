@@ -6,29 +6,49 @@ const isNative = () => window.Capacitor?.isNativePlatform();
 
 // Track the current playback population task to allow cancellation of stale ones
 let activePopulationId = 0;
+let errorCallback = null;
+
+export function registerErrorCallback(callback) {
+    errorCallback = callback;
+}
+
+function reportError(msg) {
+    if (errorCallback) errorCallback(msg);
+}
 
 export async function nativeFetch(options) {
-    if (isNative()) {
-        const response = await CapacitorHttp.request({
-            ...options
-        });
-        return {
-            ok: response.status >= 200 && response.status < 300,
-            json: async () => response.data,
-            status: response.status
+    try {
+        if (isNative()) {
+            const response = await CapacitorHttp.request({
+                ...options,
+                connectTimeout: 5000,
+                readTimeout: 5000
+            });
+            const ok = response.status >= 200 && response.status < 300;
+            if (!ok) reportError('failed to send!');
+            return {
+                ok: ok,
+                json: async () => response.data,
+                status: response.status
+            };
+        }
+        // Fallback to standard fetch for browser/dev
+        const { url, method, headers, data, ...extra } = options;
+        const fetchOptions = {
+            method,
+            headers,
+            ...extra
         };
+        if (data) {
+            fetchOptions.body = JSON.stringify(data);
+        }
+        const res = await fetch(url, fetchOptions);
+        if (!res.ok) reportError('failed to send!');
+        return res;
+    } catch (err) {
+        reportError('failed to send!');
+        throw err;
     }
-    // Fallback to standard fetch for browser/dev
-    const { url, method, headers, data, ...extra } = options;
-    const fetchOptions = {
-        method,
-        headers,
-        ...extra
-    };
-    if (data) {
-        fetchOptions.body = JSON.stringify(data);
-    }
-    return await fetch(url, fetchOptions);
 }
 
 export async function getPlayerState() {

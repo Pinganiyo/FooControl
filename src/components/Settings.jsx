@@ -163,17 +163,17 @@ export default function Settings({ beefwebState }) {
                             min="0"
                             max="100"
                             step="1"
-                            value={Math.round(100 * (1 - Math.min(1, Math.sqrt(Math.max(0, -(beefwebState?.playerState?.volume?.value || 0)) / 60))))}
+                            value={Math.round(100 * (1 - Math.min(1, Math.pow(Math.max(0, -(beefwebState?.playerState?.volume?.value || 0)) / 60, 0.25))))}
                             onChange={(e) => {
                                 const pct = parseFloat(e.target.value);
-                                // Curve: dB = -60 * (1 - pct/100)^2
-                                // This provides more control at the loud end and matches perceived volume better
+                                // Curve: dB = -60 * (1 - pct/100)^4
+                                // User updated to pow 4 for extreme control at high volume
                                 const dB = -60 * Math.pow(1 - (pct / 100), 4);
                                 setVolume(dB);
                             }}
                         />
                         <span className="volume-value-display">
-                            {Math.round(100 * (1 - Math.min(1, Math.sqrt(Math.max(0, -(beefwebState?.playerState?.volume?.value || 0)) / 60))))}%
+                            {Math.round(100 * (1 - Math.min(1, Math.pow(Math.max(0, -(beefwebState?.playerState?.volume?.value || 0)) / 60, 0.25))))}%
                         </span>
                     </div>
                 </div>

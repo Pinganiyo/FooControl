@@ -80,10 +80,11 @@ export function useBeefweb() {
     // SMART POLLING FALLBACK FOR ANDROID/CORS ISSUES
     // Since SSE (EventSource) often gets blocked by CORS on Android even with CapacitorHttp,
     // we use a periodic fetch as a fallback if the real-time connection isn't working perfectly.
+    // SMART DYNAMIC POLLING
+    // Optimizes petitions: 3s when playing, 10s when stopped, and precise polling at song end.
     useEffect(() => {
+        let timeout;
         const poll = async () => {
-            // Only poll if we don't have a working SSE connection
-            // or if we want to ensure total sync on Android.
             try {
                 const state = await getPlayerState();
                 setPlayerState(state);
@@ -91,13 +92,31 @@ export function useBeefweb() {
                     setCurrentTime(state.activeItem.position || 0);
                 }
                 setIsConnected(true);
+
+                // Calculate next interval
+                let nextInterval = 10000; // Default 10s for paused/stopped
+                
+                if (state.playbackState === 'playing' && state.activeItem) {
+                    const remaining = (state.activeItem.duration || 0) - (state.activeItem.position || 0);
+                    
+                    if (remaining > 0 && remaining < 4) {
+                        // Song ending soon! Poll shortly after it ends to catch the track change.
+                        nextInterval = Math.max(500, (remaining * 1000) + 500);
+                    } else {
+                        nextInterval = 3000; // Normal playing interval
+                    }
+                }
+                
+                timeout = setTimeout(poll, nextInterval);
             } catch (e) {
                 console.error("Polling failed", e);
+                // On error, wait 10s before trying again
+                timeout = setTimeout(poll, 10000);
             }
         };
 
-        const interval = setInterval(poll, 3000); // Poll every 3 seconds for better feels
-        return () => clearInterval(interval);
+        poll();
+        return () => clearTimeout(timeout);
     }, [getServerUrl()]);
 
     // Local timer to update progress smoothly
