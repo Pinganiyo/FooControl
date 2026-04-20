@@ -146,6 +146,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                         />
                     </div>
                     <div className="album-hero-title-overlay">
+                        {tracks.length === 1 && <div className="album-header-artist">{targetArtistName}</div>}
                         <h2 className="album-header-title">{targetAlbumName}</h2>
                         {isOffline && <span className="offline-badge">{t('offline_cache')}</span>}
                     </div>
@@ -175,7 +176,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                 <div className="album-tracklist">
                     {isLoading ? (
                         <div className="album-loading"><div className="fancy-spinner" /></div>
-                    ) : (() => {
+                    ) : tracks.length > 1 ? (() => {
                         // Check if album has multiple discs
                         const discNums = [...new Set(tracks.map(t => t.discNum || 1))].sort((a, b) => a - b);
                         const isMultiDisc = discNums.length > 1;
@@ -193,7 +194,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                                             <span>{t('disc')} {disc}</span>
                                         </div>
                                     )}
-                                    <TrackRow 
+                                    <TrackRow
                                         key={`album-trk-${i}`}
                                         track={track}
                                         index={i}
@@ -206,7 +207,7 @@ export default function AlbumView({ beefwebState, onClose, albumData, onOpenMenu
                                 </React.Fragment>
                             );
                         });
-                    })()}
+                    })() : null}
                 </div>
             </div>
         </div>

@@ -279,7 +279,15 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                                             <div className="divider-line"></div>
                                         </div>
                                     )}
-                                    <div className="album-card" onClick={() => onOpenAlbum(album)}>
+                                    <div 
+                                        className="album-card" 
+                                        onClick={() => onOpenAlbum(album)}
+                                        onContextMenu={(e) => {
+                                            if (album.trackCount === 1 && album.trackInfo) {
+                                                onOpenMenu(e, album.trackInfo, [album.trackInfo]);
+                                            }
+                                        }}
+                                    >
                                         <div className="album-card-art-container">
                                             <ProgressiveImage
                                                 src={(!isSyncing && album.itemIndex >= 0) ? `${getApiUrl()}/artwork/${album.playlistId}/${album.itemIndex}?_t=${encodeURIComponent(album.title)}&width=300` : null}

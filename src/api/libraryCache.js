@@ -342,7 +342,15 @@ export async function performFullSync(onProgress) {
                             year: year,
                             trackCount: 1,
                             playlistId: pl.id, 
-                            itemIndex: globalIndex
+                            itemIndex: globalIndex,
+                            trackInfo: {
+                                title,
+                                artist: trackArtist,
+                                path,
+                                duration,
+                                itemIndex: globalIndex,
+                                playlistId: pl.id
+                            }
                         });
                     }
 
@@ -579,7 +587,15 @@ async function scrapePlaylist(plId, onProgress) {
                     year: year,
                     trackCount: 1,
                     playlistId: plId, 
-                    itemIndex: globalIndex
+                    itemIndex: globalIndex,
+                    trackInfo: {
+                        title,
+                        artist: trackArtist,
+                        path,
+                        duration,
+                        itemIndex: globalIndex,
+                        playlistId: plId
+                    }
                 });
             }
 
