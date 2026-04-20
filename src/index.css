@@ -2217,6 +2217,41 @@ input:checked+.slider:before {
   opacity: 0;
 }
 
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  position: sticky;
+  top: 60px;
+  z-index: 20;
+  backdrop-filter: blur(10px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.filter-bar::-webkit-scrollbar {
+  display: none;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.filter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.5);
+  white-space: nowrap;
+}
+
 .img-placeholder {
   font-size: 2.5rem;
   opacity: 0.1;
@@ -2457,4 +2492,28 @@ input:checked+.slider:before {
     transform: translateX(-50%) translateY(0);
     opacity: 1;
   }
+}
+
+.grid-year-header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px 5px 10px 5px;
+  margin-top: 10px;
+  pointer-events: none;
+}
+
+.grid-year-header span {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--accent-color);
+  letter-spacing: 1px;
+  text-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3);
+}
+
+.grid-year-header .divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right, rgba(255, 255, 255, 0.2), transparent);
 }

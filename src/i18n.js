@@ -65,6 +65,13 @@ export const translations = {
     sort_year: 'Year (Newest)',
     sort_artist: 'Artist (A-Z)',
     sort_tracks: 'Size (# Tracks)',
+    unknown_year: 'Unknown Year',
+    
+    // Filters
+    filter_type: 'Filter:',
+    filter_all: 'All',
+    filter_albums: 'Albums',
+    filter_singles: 'Singles',
     
     // Settings
     settings_title: 'Menu & Settings',
@@ -180,6 +187,13 @@ export const translations = {
     sort_year: 'Año (Más nuevos)',
     sort_artist: 'Artista (A-Z)',
     sort_tracks: 'Tamaño (Nº Canciones)',
+    unknown_year: 'Año Desconocido',
+
+    // Filters
+    filter_type: 'Filtrar:',
+    filter_all: 'Todo',
+    filter_albums: 'Álbumes',
+    filter_singles: 'Singles',
     
     // Settings
     settings_title: 'Menú y Ajustes',

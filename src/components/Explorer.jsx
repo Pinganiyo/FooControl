@@ -10,15 +10,20 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
     const { t } = useTranslation();
     const [showDeepSyncSetup, setShowDeepSyncSetup] = useState(false);
     const [deepSyncPaths, setDeepSyncPaths] = useState('C:\\Users\\Ruben\\Music\\a.Flac\nC:\\Users\\Ruben\\Music\\M.Others');
-    
+
     // Grid settings
     const [gridCols, setGridCols] = useState(() => {
         return parseInt(localStorage.getItem('explorer_cols')) || 2;
     });
-    
+
     // Sort settings
     const [sortBy, setSortBy] = useState(() => {
         return localStorage.getItem('explorer_sort') || 'name';
+    });
+
+    // Album Type Filter (All, Albums, Singles)
+    const [typeFilter, setTypeFilter] = useState(() => {
+        return localStorage.getItem('explorer_type_filter') || 'all';
     });
 
     useEffect(() => {
@@ -28,6 +33,10 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
     useEffect(() => {
         localStorage.setItem('explorer_sort', sortBy);
     }, [sortBy]);
+
+    useEffect(() => {
+        localStorage.setItem('explorer_type_filter', typeFilter);
+    }, [typeFilter]);
 
     const toggleGrid = () => {
         setGridCols(prev => prev === 2 ? 3 : prev === 3 ? 4 : 2);
@@ -47,10 +56,22 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
             if (!library?.albums) return [];
             items = [...library.albums];
         }
-        
+
+        // Apply Album Type Filter
+        if (typeFilter === 'albums') {
+            items = items.filter(a => (a.trackCount || 0) >= 2);
+        } else if (typeFilter === 'singles') {
+            items = items.filter(a => (a.trackCount || 0) < 2);
+        }
+
         switch (sortBy) {
             case 'year':
-                return items.sort((a, b) => (b.year || 0) - (a.year || 0));
+                // Sub-sort by artist/title for consistent grouping
+                return items.sort((a, b) => {
+                    const yearDiff = (b.year || 0) - (a.year || 0);
+                    if (yearDiff !== 0) return yearDiff;
+                    return (a.artist || "").localeCompare(b.artist || "") || a.title.localeCompare(b.title);
+                });
             case 'artist':
                 return items.sort((a, b) => a.artist.localeCompare(b.artist));
             case 'tracks':
@@ -74,7 +95,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
     }
 
     const getTitle = () => {
-        switch(view) {
+        switch (view) {
             case 'albums': return t('all_albums');
             case 'artists': return t('artists');
             case 'artist_albums': return selectedArtist ? selectedArtist : t('artist_albums');
@@ -84,7 +105,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
     };
 
     return (
-        <div className="explorer-container" style={{'--album-grid-cols': gridCols}}>
+        <div className="explorer-container" style={{ '--album-grid-cols': gridCols }}>
             <header className="explorer-header menu-header">
                 <div className="header-left">
                     {view !== 'menu' && (
@@ -96,7 +117,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                             }
                         }} title={t('back')}>
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M19 12H5M12 19l-7-7 7-7"/>
+                                <path d="M19 12H5M12 19l-7-7 7-7" />
                             </svg>
                         </button>
                     )}
@@ -105,9 +126,9 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
 
                 <div className="explorer-actions">
                     {view !== 'artist_albums' && view !== 'menu' && (
-                        <button 
-                            className={`sync-btn-small ${showDeepSyncSetup ? 'active' : ''}`} 
-                            onClick={() => setShowDeepSyncSetup(!showDeepSyncSetup)} 
+                        <button
+                            className={`sync-btn-small ${showDeepSyncSetup ? 'active' : ''}`}
+                            onClick={() => setShowDeepSyncSetup(!showDeepSyncSetup)}
                             title={t('deep_sync')}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -117,9 +138,9 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                         </button>
                     )}
                     {view === 'artist_albums' && (
-                        <button 
-                            className="sync-btn-small" 
-                            onClick={() => onShuffleArtist(selectedArtist)} 
+                        <button
+                            className="sync-btn-small"
+                            onClick={() => onShuffleArtist(selectedArtist)}
                             title={t('shuffle_artist')}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -140,7 +161,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                     {view !== 'artist_albums' && view !== 'menu' && (
                         <button className={`sync-btn-small ${isArtworkCaching ? 'artwork-caching' : ''}`} onClick={onSync} title={isArtworkCaching ? artworkCacheStatus : t('sync_library')}>
                             <svg className={isSyncing ? 'spinning' : ''} width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
                             </svg>
                         </button>
                     )}
@@ -151,9 +172,9 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                 <div className="deep-sync-overlay">
                     <h3>{t('deep_search_title')}</h3>
                     <p>{t('deep_search_help')}</p>
-                    <textarea 
-                        className="deep-sync-textarea" 
-                        value={deepSyncPaths} 
+                    <textarea
+                        className="deep-sync-textarea"
+                        value={deepSyncPaths}
                         onChange={(e) => setDeepSyncPaths(e.target.value)}
                         placeholder="C:\Music"
                     />
@@ -184,17 +205,28 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
 
             {(view === 'albums' || view === 'artist_albums') && (
                 <div className="filter-bar">
-                    <span className="filter-label">{t('sort_by')}</span>
-                    <select 
-                        className="sort-select" 
-                        value={sortBy} 
-                        onChange={(e) => setSortBy(e.target.value)}
-                    >
-                        <option value="name">{t('sort_name')}</option>
-                        <option value="year">{t('sort_year')}</option>
-                        {view !== 'artist_albums' && <option value="artist">{t('sort_artist')}</option>}
-                        <option value="tracks">{t('sort_tracks')}</option>
-                    </select>
+                    <div className="filter-group">
+                        <select
+                            className="sort-select"
+                            value={sortBy}
+                            onChange={(e) => setSortBy(e.target.value)}
+                        >
+                            <option value="name">{t('sort_name')}</option>
+                            <option value="year">{t('sort_year')}</option>
+                            {view !== 'artist_albums' && <option value="artist">{t('sort_artist')}</option>}
+                            <option value="tracks">{t('sort_tracks')}</option>
+                        </select>
+                        <select
+                            className="sort-select"
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                        >
+                            <option value="all">{t('filter_all')}</option>
+                            <option value="albums">{t('filter_albums')}</option>
+                            <option value="singles">{t('filter_singles')}</option>
+                        </select>
+                    </div>
+
                     <div className="album-count">
                         {sortedAlbums.length} {sortedAlbums.length === 1 ? t('album') : t('albums')}
                     </div>
@@ -206,7 +238,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                     <div className="explorer-menu">
                         <div className="menu-card" onClick={() => setView('artists')}>
                             <div className="menu-card-icon playlists">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4"/><path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2"/></svg>
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="7" r="4" /><path d="M5.5 21v-2a4 4 0 0 1 4-4h5a4 4 0 0 1 4 4v2" /></svg>
                             </div>
                             <div className="menu-card-info">
                                 <h3>{t('artists')}</h3>
@@ -224,9 +256,9 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                             </div>
                         </div>
 
-                    <div className="menu-card" onClick={() => setView('folders')}>
+                        <div className="menu-card" onClick={() => setView('folders')}>
                             <div className="menu-card-icon folders">
-                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" /></svg>
                             </div>
                             <div className="menu-card-info">
                                 <h3>{t('folders')}</h3>
@@ -236,33 +268,45 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                     </div>
                 ) : (view === 'albums' || view === 'artist_albums') ? (
                     <div className="album-grid">
-                        {sortedAlbums.map((album, i) => (
-                            <div key={`album-card-${i}`} className="album-card" onClick={() => onOpenAlbum(album)}>
-                                <div className="album-card-art-container">
-                                    <ProgressiveImage 
-                                        src={(!isSyncing && album.itemIndex >= 0) ? `${getApiUrl()}/artwork/${album.playlistId}/${album.itemIndex}?_t=${encodeURIComponent(album.title)}&width=300` : null} 
-                                        alt={album.title}
-                                        className="album-card-art"
-                                        cacheKey={getArtworkCacheKey(album.artist, album.title)}
-                                    />
-                                </div>
-                                <div className="album-card-info">
-                                    <div className="album-card-title">{album.title}</div>
-                                    <div className="album-card-artist">
-                                        {view !== 'artist_albums' && `${album.artist} • `}{album.trackCount} {album.trackCount === 1 ? t('track') : t('tracks')}
+                        {sortedAlbums.map((album, i) => {
+                            const showYearHeader = sortBy === 'year' && (i === 0 || album.year !== sortedAlbums[i - 1].year);
+
+                            return (
+                                <React.Fragment key={`album-wrapper-${i}`}>
+                                    {showYearHeader && (
+                                        <div className="grid-year-header">
+                                            <span>{album.year || t('unknown_year')}</span>
+                                            <div className="divider-line"></div>
+                                        </div>
+                                    )}
+                                    <div className="album-card" onClick={() => onOpenAlbum(album)}>
+                                        <div className="album-card-art-container">
+                                            <ProgressiveImage
+                                                src={(!isSyncing && album.itemIndex >= 0) ? `${getApiUrl()}/artwork/${album.playlistId}/${album.itemIndex}?_t=${encodeURIComponent(album.title)}&width=300` : null}
+                                                alt={album.title}
+                                                className="album-card-art"
+                                                cacheKey={getArtworkCacheKey(album.artist, album.title)}
+                                            />
+                                        </div>
+                                        <div className="album-card-info">
+                                            <div className="album-card-title">{album.title}</div>
+                                            <div className="album-card-artist">
+                                                {view !== 'artist_albums' && `${album.artist} • `}{album.trackCount} {album.trackCount === 1 ? t('track') : t('tracks')}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
                 ) : view === 'artists' ? (
-                    <ArtistBrowser 
-                        artists={library?.artists || []} 
+                    <ArtistBrowser
+                        artists={library?.artists || []}
                         isSyncing={isSyncing}
                         onOpenArtist={(artistName) => {
                             setSelectedArtist(artistName);
                             setView('artist_albums');
-                        }} 
+                        }}
                         onShuffleArtist={onShuffleArtist}
                     />
                 ) : (
