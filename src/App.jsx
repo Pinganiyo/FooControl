@@ -9,14 +9,14 @@ import { ExplorerScreen, SearchScreen } from './components/Placeholders';
 import Settings from './components/Settings';
 import { useBeefweb } from './hooks/useBeefweb';
 import { useTranslation } from './contexts/TranslationContext';
-import { getCachedData, performFullSync, performDeepSync, cacheAllArtwork, getAllCachedTracks } from './api/libraryCache';
+import { getCachedData, performFullSync, performDeepSync, cacheAllArtwork, getAllCachedTracks, getTracksByAlbum } from './api/libraryCache';
 import { getDominantColor, applyThemeColor } from './api/colorExtractor';
 import { clearLocalArtworkCache, getArtworkCacheKey, preCacheArtwork } from './api/artwork';
 import { getApiUrl, getServerUrlAsync, getServerUrl } from './api/network';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import ContextMenu from './components/ContextMenu';
-import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled, setVolume, registerErrorCallback } from './api/beefweb';
+import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled, playTracksInOrder, setVolume, registerErrorCallback } from './api/beefweb';
 import { initNotifications, syncPlaybackNotification } from './api/notificationManager';
 import { VolumeButtons } from '@capacitor-community/volume-buttons';
 
@@ -41,7 +41,8 @@ function App() {
     x: 0,
     y: 0,
     track: null,
-    contextTracks: []
+    contextTracks: [],
+    isAlbum: false
   });
 
   // Dual-Layer Background Crossfade State
@@ -272,7 +273,7 @@ function App() {
     }
   }, [beefwebState.playerState?.activeItem, beefwebState.playerState?.playbackState, artworkUrl]);
 
-  const handleOpenMenu = (e, track, contextTracks = []) => {
+  const handleOpenMenu = (e, track, contextTracks = [], isAlbum = false) => {
     e.preventDefault();
     const x = e.clientX || (e.touches ? e.touches[0].clientX : 0);
     const y = e.clientY || (e.touches ? e.touches[0].clientY : 0);
@@ -281,7 +282,8 @@ function App() {
       x,
       y,
       track,
-      contextTracks
+      contextTracks,
+      isAlbum
     });
   };
 
@@ -319,6 +321,38 @@ function App() {
         if (idx !== -1) {
           await playContextShuffled(menuState.contextTracks, idx);
         }
+      } else if (action === 'albumPlayNow' || action === 'albumPlayShuffled' || action === 'albumAddShuffled') {
+        // ALBUM ACTIONS
+        const albumTracks = await getTracksByAlbum(track.title || track.album, null, track.albumKey);
+        if (!albumTracks || albumTracks.length === 0) return;
+
+        if (action === 'albumPlayNow') {
+          // Play album in order
+          await playTracksInOrder(albumTracks);
+        } else if (action === 'albumPlayShuffled') {
+          // Play album shuffled
+          await playAlbumShuffled(albumTracks);
+        } else if (action === 'albumAddShuffled') {
+          // Add to queue shuffled
+          const shuffled = [...albumTracks];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          
+          const paths = shuffled.map(t => t.path).filter(Boolean);
+          if (paths.length > 0) {
+            // Send one by one to ensure foobar preserves our shuffled order
+            (async () => {
+              for (const path of paths) {
+                await insertIntoPlaylist(fooPlaylistId, 100000, [path]);
+              }
+            })();
+          }
+        }
+      } else if (action === 'addToPlaylist') {
+        // FUTURE FEATURE PLACEHOLDER
+        alert("Add to Playlist coming soon! 🎵");
       }
       
       if (beefwebState.refresh) beefwebState.refresh();

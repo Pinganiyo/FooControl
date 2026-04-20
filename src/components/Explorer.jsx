@@ -283,9 +283,7 @@ export default function Explorer({ library, isSyncing, syncStatus, isArtworkCach
                                         className="album-card" 
                                         onClick={() => onOpenAlbum(album)}
                                         onContextMenu={(e) => {
-                                            if (album.trackCount === 1 && album.trackInfo) {
-                                                onOpenMenu(e, album.trackInfo, [album.trackInfo]);
-                                            }
+                                            onOpenMenu(e, album, [], true);
                                         }}
                                     >
                                         <div className="album-card-art-container">

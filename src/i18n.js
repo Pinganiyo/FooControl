@@ -106,6 +106,10 @@ export const translations = {
     play_next: 'Play Next',
     add_to_queue: 'Add to Queue',
     play_shuffle: 'Play & Shuffle',
+    menu_play_now: 'Play Now',
+    menu_play_shuffled: 'Play Shuffled',
+    menu_add_shuffled: 'Add Shuffled',
+    add_to_playlist: 'Add to Playlist',
     
     // Storage & Quality
     storage_quality: 'Storage & Quality',
@@ -228,6 +232,10 @@ export const translations = {
     play_next: 'Reproducir Siguiente',
     add_to_queue: 'Añadir a la Cola',
     play_shuffle: 'Reproducir Aleatorio',
+    menu_play_now: 'Reproducir Ahora',
+    menu_play_shuffled: 'Reproducir Aleatorio',
+    menu_add_shuffled: 'Añadir Aleatorio',
+    add_to_playlist: 'Añadir a Playlist',
 
     // Storage & Quality
     storage_quality: 'Almacenamiento y Calidad',
