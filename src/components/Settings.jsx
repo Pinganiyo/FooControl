@@ -160,14 +160,20 @@ export default function Settings({ beefwebState }) {
                         <input
                             type="range"
                             className="volume-range-slider"
-                            min="80"
-                            max="0"
-                            step="0.5"
-                            value={Math.max(-min, beefwebState?.playerState?.volume?.value || 0)}
-                            onChange={(e) => setVolume(parseFloat(e.target.value))}
+                            min="0"
+                            max="100"
+                            step="1"
+                            value={Math.round(100 * (1 - Math.min(1, Math.sqrt(Math.max(0, -(beefwebState?.playerState?.volume?.value || 0)) / 60))))}
+                            onChange={(e) => {
+                                const pct = parseFloat(e.target.value);
+                                // Curve: dB = -60 * (1 - pct/100)^2
+                                // This provides more control at the loud end and matches perceived volume better
+                                const dB = -60 * Math.pow(1 - (pct / 100), 4);
+                                setVolume(dB);
+                            }}
                         />
                         <span className="volume-value-display">
-                            {Math.round(((Math.max(-min, beefwebState?.playerState?.volume?.value || 0) + min) / min) * 100)}%
+                            {Math.round(100 * (1 - Math.min(1, Math.sqrt(Math.max(0, -(beefwebState?.playerState?.volume?.value || 0)) / 60))))}%
                         </span>
                     </div>
                 </div>

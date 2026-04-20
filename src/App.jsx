@@ -16,8 +16,9 @@ import { getApiUrl, getServerUrlAsync, getServerUrl } from './api/network';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
 import ContextMenu from './components/ContextMenu';
-import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled } from './api/beefweb';
+import { addToQueue, queueNext, playContextShuffled, insertIntoPlaylist, getOrCreatePlaylist, playAlbumShuffled, setVolume } from './api/beefweb';
 import { initNotifications, syncPlaybackNotification } from './api/notificationManager';
+import { VolumeButtons } from '@capacitor-community/volume-buttons';
 
 const isNative = Capacitor.isNativePlatform();
 
@@ -61,8 +62,26 @@ function App() {
     initLibrary();
     if (isNative) {
       initNotifications();
+
+      // Listen for hardware volume button presses (intercepting system volume)
+      VolumeButtons.watchVolume({ disableSystemVolumeHandler: true }, (result) => {
+        const currentVol = beefwebState.playerState?.volume?.value || 0;
+        const step = 2.0;
+
+        if (result.direction === 'up') {
+          const nextVol = Math.min(0, currentVol + step);
+          setVolume(nextVol);
+        } else {
+          const nextVol = Math.max(-100, currentVol - step);
+          setVolume(nextVol);
+        }
+      });
+
+      return () => {
+        VolumeButtons.clearWatch();
+      };
     }
-  }, []);
+  }, [beefwebState.playerState?.volume?.value]);
 
   const initLibrary = async () => {
     // 1. FAST HYDRATION: Load Library data from cache FIRST for zero-wait UI
